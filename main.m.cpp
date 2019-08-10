@@ -7,6 +7,7 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 struct _TTF_Font;
+struct SDL_PixelFormat;
 
 typedef _TTF_Font TTF_Font;
 
@@ -74,30 +75,21 @@ public:
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <chrono>
 
-template<typename T>
-void run(T& t);
+void run();
 
 int main(int argc, char *argv[]) {
+  (void) argc;
+  (void) argv;
+
   gfx::context ctx;
 
   if (!ctx) {
     std::cerr << "Graphics init failed\n";
   }
-
-  gfx::TermWin window;
-
-  window.resize_window(24, 80);
-  gfx::TermCell cell;
-  cell.fg_col = 0xFFFFFFFF;
-  cell.bg_col = 0x000000FF;
-  cell.glyph = "H";
-
-  window.set_cell(0, 0, cell);
-  window.redraw();
-
-  auto fn = [&window](){ window.redraw(); };
-  run(fn); 
+  
+  run();
 }
 
 // GRAPHICS FILE
@@ -106,6 +98,7 @@ int main(int argc, char *argv[]) {
 #include <cairo.h>
 
 namespace gfx {
+
 context::context() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     d_error = true;
@@ -132,7 +125,13 @@ TermWin::TermWin()
 
   tex = nullptr;
 
-  font = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12);
+  font = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 25);
+
+  int advance;
+  TTF_GlyphMetrics(font, 'M', nullptr, nullptr, nullptr, nullptr, &advance);
+   
+  cell_height = TTF_FontLineSkip(font);
+  cell_width = advance; 
 }
 
 TermWin::~TermWin()
@@ -182,7 +181,6 @@ void TermWin::set_cell(int row, int col, TermCell cell)
 
   const size_t offset = row * num_cols + col;
 
-  return;
   if (cels[offset] != cell) {
     cels[offset] = cell;
     dirty[offset] = true;
@@ -193,39 +191,124 @@ void TermWin::redraw()
 { 
   if (tex == nullptr) return;
 
+  // set whole screen to purple
   SDL_SetRenderTarget(ren, tex);
-  SDL_SetRenderDrawColor(ren, 0x77, 0x00, 0xFF, 0xFF);
+  // SDL_SetRenderDrawColor(ren, 0x77, 0x00, 0xFF, 0xFF);
+  // SDL_RenderClear(ren);
 
-  for (size_t row = 0; row < num_rows; row++)
-  {
-    for (size_t col = 0; col < num_cols; col++)
-    {
-      
+#if 1 
+  for (int row = 0; row < num_rows; row++) {
+    for (int col = 0; col < num_cols; col++) {
+      int offset = row * num_cols + col;
+      const TermCell &cell = cels[offset];
+
+      if (!dirty[offset])
+        continue;
+
+      const char *glyph = cell.glyph.c_str();
+
+      SDL_Color fg, bg;
+
+      fg.r = (cell.fg_col & 0xFF000000) >> 24;
+      fg.g = (cell.fg_col & 0x00FF0000) >> 16;
+      fg.b = (cell.fg_col & 0x0000FF00) >> 8;
+      fg.a = 0xFF;
+
+      bg.r = (cell.bg_col & 0xFF000000) >> 24;
+      bg.g = (cell.bg_col & 0x00FF0000) >> 16;
+      bg.b = (cell.bg_col & 0x0000FF00) >> 8;
+      bg.a = 0xFF;
+
+      SDL_Surface *cellSurf = TTF_RenderText_Shaded(font, glyph, fg, bg);
+
+      SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
+
+      SDL_Rect cellTex_rect;
+      cellTex_rect.x = col * cell_width;
+      cellTex_rect.y = row * cell_height;
+      cellTex_rect.w = cell_width;
+      cellTex_rect.h = cell_height;
+
+      SDL_RenderCopy(ren, cellTex, NULL, &cellTex_rect);
+
+      SDL_DestroyTexture(cellTex);
+      SDL_FreeSurface(cellSurf);
     }
   }
+#endif
 
-#if 1
-//  SDL_Rect rect;
-//  rect.x = rect.w = 100;
-//  rect.y = rect.h = 100;
-//  SDL_RenderClear(ren);
-//  SDL_RenderFillRect(ren, &rect);
-//  SDL_RenderDrawRect(ren, &rect);
+#if 0
+  SDL_Rect rect;
+  rect.x = rect.w = 100;
+  rect.y = rect.h = 100;
+  SDL_RenderClear(ren);
+  SDL_RenderFillRect(ren, &rect);
+  SDL_RenderDrawRect(ren, &rect);
 #endif
 
   SDL_SetRenderTarget(ren, nullptr);
   SDL_RenderCopy(ren, tex, nullptr, nullptr);
   SDL_RenderPresent(ren);
 
-  for (size_t i = 0; i < num_cols * num_rows; i++) {
+  for (int i = 0; i < num_cols * num_rows; i++) {
     dirty[i] = 0;
   }
 }
 } // namespace gfx
 
-template<typename T>
-void run(T& t)
+namespace app {
+class VTerm {};
+}
+
+void run()
 {
+  gfx::TermWin window;
+
+  window.resize_window(24, 80);
+
+  gfx::TermCell cell;
+  cell.fg_col = 0xFFFFFFFF;
+  cell.bg_col = 0x000000FF;
+
+  cell.fg_col = 0x0000FFFF;
+  cell.bg_col = 0x000000FF;
+  cell.glyph = "B";
+
+  window.set_cell(4, 4, cell);
+
+  cell.fg_col = 0x00FF00FF;
+  cell.bg_col = 0x000000FF;
+  cell.glyph = "G";
+
+  window.set_cell(4, 5, cell);
+
+  cell.fg_col = 0xFF0000FF;
+  cell.bg_col = 0x000000FF;
+  cell.glyph = "R";
+
+  window.set_cell(4, 6, cell);
+
+  auto time = [](auto&& fn){
+    auto start = std::chrono::high_resolution_clock::now();
+    fn();
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "redraw() time "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       start)
+                     .count()
+              << "us \n";
+  };
+
+  auto fn = [&window](){ window.redraw(); };
+
+  time(fn);
+  time(fn);
+  time(fn);
+
+  app::VTerm term;
+  (void) term;
+
   SDL_Event e;
 
   while (true) {
@@ -236,17 +319,22 @@ void run(T& t)
       case SDL_KEYDOWN: {
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
-        case SDLK_q:
-          return;
         default: {
         }
+        }
+      } break;
+      case SDL_TEXTINPUT: {
+        char *input = e.text.text;
+        if (input[0] != '\0' && input[1] == '\0') {
+          cell.glyph.assign(input, 1);
+          window.set_cell(0, 0, cell);
         }
       } break;
       default: {
       }
       }
 
-      t();
+      window.redraw();
     }
   }
 }
