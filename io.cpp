@@ -2,17 +2,16 @@
 
 #include <chrono>
 #include <iostream>
+#include <cassert>
+
+#include <unistd.h>
+#include <fcntl.h>
 
 namespace io {
 PseudoTerminal::PseudoTerminal(cb _data_available)
     : data_available(_data_available) {}
 
 PseudoTerminal::~PseudoTerminal() {
-  std::unique_lock<std::mutex> g{stop_mutex};
-  stop = true;
-  stop_signal.notify_one();
-  g.unlock();
-  t.join();
 }
 
 size_t PseudoTerminal::read(char *d, size_t n) {
@@ -27,21 +26,20 @@ size_t PseudoTerminal::write(const char *d, size_t n) {
   return 0u;
 }
 
-void PseudoTerminal::run() {
-  std::cout << "Starting PT\n";
-
-  std::unique_lock<std::mutex> g{stop_mutex};
-
-  stop_signal.wait(g, [this]() { return this->stop; });
-
-  std::cout << "Stopping PT\n";
-}
-
 void PseudoTerminal::start() {
   std::cout << "Start PT\n";
+ 
+  int fds[2]; 
+  
+  if (0 != pipe2(fds, O_NONBLOCK)) 
+  {
+    assert(false);
+  }
 
-  std::thread thread{[this]() { this->run(); }};
+  clientfd = fds[0];
+  masterfd = fds[1];
 
-  t.swap(thread);
+  
+
 }
 } // namespace io

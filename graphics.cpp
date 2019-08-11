@@ -33,12 +33,24 @@ TermWin::TermWin()
 
   tex = nullptr;
 
-  font = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 25);
+  int pointSize = 25;
+
+  fontRegular = TTF_OpenFont(
+      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
+
+  fontRegularItalic = TTF_OpenFont(
+      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-RI.ttf", pointSize);
+
+  fontBold = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf",
+                          pointSize);
+
+  fontBoldItalic = TTF_OpenFont(
+      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
 
   int advance;
-  TTF_GlyphMetrics(font, 'M', nullptr, nullptr, nullptr, nullptr, &advance);
+  TTF_GlyphMetrics(fontRegular, 'M', nullptr, nullptr, nullptr, nullptr, &advance);
    
-  cell_height = TTF_FontLineSkip(font);
+  cell_height = TTF_FontLineSkip(fontRegular);
   cell_width = advance; 
 }
 
@@ -49,7 +61,7 @@ TermWin::~TermWin()
     std::cout << "Texture destroyed\n";
   }
   std::cout << "Font destroyed\n";
-  TTF_CloseFont(font);
+  TTF_CloseFont(fontRegular);
   std::cout << "Renderer destroyed\n";
   SDL_DestroyRenderer(ren);
   std::cout << "Window destroyed\n";
@@ -126,6 +138,13 @@ void TermWin::redraw()
       bg.g = (cell.bg_col & 0x00FF0000) >> 16;
       bg.b = (cell.bg_col & 0x0000FF00) >> 8;
       bg.a = 0xFF;
+
+      TTF_Font *font;
+    
+      if (!cell.bold && !cell.italic) font = fontRegular;
+      if (!cell.bold && cell.italic) font = fontRegularItalic;
+      if (cell.bold && !cell.italic) font = fontBold;
+      if (cell.bold && cell.italic) font = fontBoldItalic;
 
       SDL_Surface *cellSurf = TTF_RenderUTF8_Shaded(font, glyph, fg, bg);
 

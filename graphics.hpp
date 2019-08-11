@@ -48,7 +48,11 @@ class TermWin {
   SDL_Window *win;
   SDL_Renderer *ren;
   SDL_Texture *tex;
-  TTF_Font *font;
+
+  TTF_Font *fontRegular;
+  TTF_Font *fontRegularItalic;
+  TTF_Font *fontBold;
+  TTF_Font *fontBoldItalic;
 
   std::vector<TermCell> cels;
   std::vector<bool> dirty;

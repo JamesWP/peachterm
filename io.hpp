@@ -4,6 +4,9 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <vector>
+
+#include <boost/asio.hpp>
 
 namespace io {
 class PseudoTerminal {
@@ -12,14 +15,12 @@ public:
 
 private:
   cb data_available;
+  
+  int clientfd;
+  int masterfd; 
 
-  std::thread t;
-
-  bool stop{false};
-
-  std::mutex stop_mutex;
-
-  std::condition_variable stop_signal;
+  std::vector<char> write_buffer;
+  std::vector<char> read_buffer;
 
   void run();
 

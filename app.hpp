@@ -15,9 +15,20 @@ public:
 
   VTerm();
 
-  void text_input(const char *input, size_t len);
+  void putglyph(const char *input, size_t len);
+
   void newline();
   void backspace();
+
+  void toggle_bold();
+  void toggle_italic();
+
+  void set_fg_red(int red);
+  int fg_red() const;
+  void set_fg_green(int green);
+  int fg_green() const;
+  void set_fg_blue(int blue);
+  int fg_blue() const;
 };
 
 void run();
