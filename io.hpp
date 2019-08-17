@@ -11,26 +11,38 @@
 namespace io {
 class PseudoTerminal {
 public:
-  using cb = std::function<void(void)>;
+  using data_read_cb =
+      std::function<void(PseudoTerminal *pt, 
+                         const char *data, 
+                         size_t len)>;
 
 private:
-  cb data_available;
-  
+  data_read_cb _data_cb;
+
   int clientfd;
   int masterfd; 
 
   std::vector<char> write_buffer;
   std::vector<char> read_buffer;
 
-  void run();
+  boost::asio::io_service service;
+  boost::asio::posix::stream_descriptor stream;
+
+  std::thread t;
+
+  boost::asio::io_service::work work;
 
 public:
-  PseudoTerminal(cb);
+  PseudoTerminal(data_read_cb);
   ~PseudoTerminal();
 
-  size_t read(char *d, size_t n);
-  size_t write(const char *d, size_t);
+  void read_complete();
+  // allow next read to happen
+
+  void write(const char *data, size_t len);
+  // perform write of len bytes from data
 
   void start();
+  // begin communication
 };
 }
