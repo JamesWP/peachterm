@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include "graphics.hpp"
 #include "io.hpp"
+#include "parser.hpp"
 
 #include <SDL.h>
 #include <chrono>
@@ -31,6 +32,10 @@ void VTerm::putglyph(const char *input, size_t len) {
 }
 
 void VTerm::newline() {
+  cell.glyph.assign("\xF0\x9F\x98\x82", 4u);
+  window.set_cell(row, col, cell);
+  return;
+
   row++;
   col = 0;
   if (row >= rows) {
@@ -86,13 +91,33 @@ size_t strnlen_s(const char* s, size_t len)
   return 0;
 }
 
+class App : public parser::VTParser, public app::VTerm
+{
+    public:
+      void on_glyph(const char *data, size_t length) {
+        std::cout << "on_glyph\n";
+        putglyph(data, length);
+      }
+};
+
 void app::run()
 {
   std::cout << "App run\n";
 
-  app::VTerm term;
+  App term;
 
-  io::PseudoTerminal pt([]() { std::cout << "PT read available\n"; });
+  const uint32_t data_available_event = SDL_RegisterEvents(1);
+
+  SDL_Event data_available;
+  SDL_memset(&data_available, 0, sizeof(data_available));
+  data_available.type = data_available_event;
+
+  io::PseudoTerminal pt([&data_available](io::PseudoTerminal *, const char *data,
+                           size_t length) {
+    data_available.user.data1 = static_cast<void*>(const_cast<char*>(data));
+    data_available.user.data2 = reinterpret_cast<void*>(length);
+    SDL_PushEvent(&data_available);
+  });
 
   pt.start();
 
@@ -100,6 +125,14 @@ void app::run()
 
   while (true) {
     while (SDL_PollEvent(&e) != 0) {
+      if (e.type == data_available_event) {
+        std::cout << "SDL Event\n";
+        term.parse_input(static_cast<const char *>(e.user.data1),
+                           reinterpret_cast<size_t>(e.user.data2));
+        term.window.redraw();
+        pt.read_complete();
+        continue;
+      }
       switch (e.type) {
       case SDL_QUIT:
         return;
@@ -108,10 +141,12 @@ void app::run()
         case SDLK_ESCAPE:
           return;
         case SDLK_RETURN:
+          pt.write("\n", 1u);
           term.newline();
           break;
         case SDLK_BACKSPACE:
           term.backspace();
+          term.window.redraw();
           break;
         case SDLK_b:
           if (e.key.keysym.mod & KMOD_CTRL) {
@@ -148,13 +183,11 @@ void app::run()
       case SDL_TEXTINPUT: {
         char *input = e.text.text;
         size_t len = strnlen_s(input, sizeof(decltype(e.text.text)));
-        term.putglyph(input, len);
+        pt.write(input, len);
       } break;
       default: {
       }
       }
-
-      term.window.redraw();
     }
   }
 }
