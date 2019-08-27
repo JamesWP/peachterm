@@ -3,6 +3,7 @@
 
 namespace app {
 class VTerm {
+protected:
   int row{0};
   int col{0};
   

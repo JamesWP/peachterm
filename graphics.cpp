@@ -50,9 +50,11 @@ TermWin::TermWin()
       "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
 
   int advance;
-  TTF_GlyphMetrics(fontRegular, 'M', nullptr, nullptr, nullptr, nullptr, &advance);
-   
-  cell_height = TTF_FontLineSkip(fontRegular);
+  TTF_GlyphMetrics(fontRegular, 'M', nullptr, nullptr, nullptr, nullptr,
+                   &advance);
+
+  font_height = TTF_FontLineSkip(fontRegular);
+  cell_height = font_height + 1;
   cell_width = advance; 
 }
 
@@ -132,8 +134,9 @@ void TermWin::redraw()
     for (int col = 0; col < num_cols; col++) {
       int offset = row * num_cols + col;
       const TermCell &cell = cels[offset];
+      bool is_cursor = row == curs_row && col == curs_col;
 
-      if (!dirty[offset])
+      if (!dirty[offset] && !is_cursor)
         continue;
 
       const char *glyph = cell.glyph.c_str();
@@ -167,10 +170,22 @@ void TermWin::redraw()
       cellTex_rect.w = cell_width;
       cellTex_rect.h = cell_height;
 
+      cellTex_rect.h = font_height;
+
       SDL_RenderCopy(ren, cellTex, NULL, &cellTex_rect);
 
       SDL_DestroyTexture(cellTex);
       SDL_FreeSurface(cellSurf);
+
+      const SDL_Color &curs_col = is_cursor ? fg : bg;
+
+      SDL_SetRenderDrawColor(ren, curs_col.r, curs_col.g, curs_col.b, 0xFF);
+
+      int curs_height = 2;
+      cellTex_rect.h = 2;
+      cellTex_rect.y += cell_height - curs_height;
+
+      SDL_RenderFillRect(ren, &cellTex_rect);
     }
   }
 
@@ -179,11 +194,21 @@ void TermWin::redraw()
   SDL_GetWindowSize(win, &screen_rect.w, &screen_rect.h);
 
   SDL_SetRenderTarget(ren, nullptr);
+
   SDL_RenderCopy(ren, tex, &screen_rect, &screen_rect);
+
   SDL_RenderPresent(ren);
 
   for (int i = 0; i < num_cols * num_rows; i++) {
     dirty[i] = 0;
   }
+  
+  dirty[curs_row * num_cols + curs_col] = 1;
 }
+
+void TermWin::move_cursor(int row, int col) {
+  curs_row = row;
+  curs_col = col;
+}
+
 } // namespace gfx

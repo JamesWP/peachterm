@@ -60,6 +60,9 @@ class TermWin {
   int num_cols;
   int cell_width = 6;
   int cell_height = 12;
+  int font_height = 12;
+  int curs_row = 0;
+  int curs_col = 0;
 
 public:
   TermWin();
@@ -72,6 +75,7 @@ public:
   void set_cell(int row, int col, TermCell cell);
   void clear_cells(TermCell cell = TermCell{});
   void redraw();
+  void move_cursor(int row, int col);
 };
 
 } // namespace gfx

@@ -111,21 +111,25 @@ class App : public parser::VTParser, public app::VTerm
       void on_glyph(const char *data, size_t length) override {
         std::cout << "on_glyph length: " << length << "\n";
         putglyph(data, length);
+        window.move_cursor(row, col);
       }
 
       void on_backspace() override {
         std::cout << "on_backspace\n";
         curs_backspace();
+        window.move_cursor(row, col);
       }
 
       void on_newline() override {
         std::cout << "on_newline\n";
         curs_newline();
+        window.move_cursor(row, col);
       }
 
       void on_return() override {
         std::cout << "on_return\n";
         curs_to_col(0);
+        window.move_cursor(row, col);
       }
 
       void on_csi_K(const char *, size_t) override {
