@@ -13,12 +13,14 @@ public:
   gfx::TermWin window;
   gfx::TermCell cell;
 
-  VTerm();
+  VTerm(int rows, int cols);
 
+  void overwriteglyph(const char *input, size_t len);
   void putglyph(const char *input, size_t len);
 
-  void newline();
-  void backspace();
+  void curs_newline();
+  void curs_backspace();
+  void curs_to_col(int col);
 
   void toggle_bold();
   void toggle_italic();

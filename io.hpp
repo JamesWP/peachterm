@@ -19,8 +19,8 @@ public:
 private:
   data_read_cb _data_cb;
 
-  int clientfd;
-  int masterfd; 
+  int childfd;
+  int parentfd; 
 
   std::vector<char> write_buffer;
   std::vector<char> read_buffer;
@@ -39,10 +39,15 @@ public:
   void read_complete();
   // allow next read to happen
 
+  // perform write to child application
   void write(const char *data, size_t len);
-  // perform write of len bytes from data
+  void write(char c);
 
-  void start();
+  bool start();
   // begin communication
+
+  bool set_size(int rows, int cols); 
+
+  bool fork_child();
 };
 }

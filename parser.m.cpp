@@ -11,6 +11,9 @@ class MockVTParser : public parser::VTParser {
 public:
   MOCK_METHOD2(on_glyph, void(const char *, size_t));
   MOCK_METHOD0(on_newline, void(void));
+  MOCK_METHOD0(on_return, void(void));
+  MOCK_METHOD2(on_csi, void(const char *, size_t));
+  MOCK_METHOD2(on_osi, void(const char *, size_t));
 };
 
 TEST(VTParser, Simple) { 
@@ -47,6 +50,31 @@ TEST(VTParser, Emoji) {
   EXPECT_CALL(p, on_glyph(_, 4u));
 
   char input[] = "\xF0\x9F\x98\x82";
+  p.parse_input(input, sizeof(input)-1);
+}
+
+TEST(VTParser, BashPrompt)
+{
+  MockVTParser p;
+
+  EXPECT_CALL(p, on_glyph(_, 1u)).WillRepeatedly(Return());
+
+  char input[] =
+      "\033]0;jpeach6@J-MacBookAir:~/gits/term/jterm\033\\"
+      "\033]7;file://J-MacBookAir/home/jpeach6/gits/term/jterm\033\\";
+
+  p.parse_input(input, sizeof(input)-1);
+}
+
+TEST(VTParser, Newline)
+{
+  MockVTParser p;
+
+  EXPECT_CALL(p, on_newline());
+  EXPECT_CALL(p, on_return());
+
+  char input[] = "\r\n";
+
   p.parse_input(input, sizeof(input)-1);
 }
 

@@ -70,6 +70,7 @@ public:
 
   void resize_window(int rows, int cols);
   void set_cell(int row, int col, TermCell cell);
+  void clear_cells(TermCell cell = TermCell{});
   void redraw();
 };
 

@@ -4,6 +4,8 @@
 #include <SDL_ttf.h>
 #include <cairo.h>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 namespace gfx {
 
@@ -86,11 +88,16 @@ void TermWin::resize_window(int rows, int cols)
 
   SDL_SetWindowSize(win, tex_width, tex_height);
 
-  tex = SDL_CreateTexture(ren, 
-                          SDL_PIXELFORMAT_RGBA8888, 
-                          SDL_TEXTUREACCESS_TARGET, 
-                          tex_width,
+  tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888,
+                          SDL_TEXTUREACCESS_TARGET, tex_width,
                           tex_height);
+
+  std::cout << "TermWin texture resize: " << tex_width << 'x'
+            << tex_height << "\n";
+
+  clear_cells();
+
+  redraw();
 }
 
 void TermWin::set_cell(int row, int col, TermCell cell)
@@ -107,16 +114,20 @@ void TermWin::set_cell(int row, int col, TermCell cell)
   }
 }
 
+void TermWin::clear_cells(TermCell cell) {
+  for (int row = 0; row < num_rows; row++) {
+    for (int col = 0; col < num_cols; col++) {
+       set_cell(row, col, cell);
+    }
+  }
+}
+
 void TermWin::redraw()
 { 
   if (tex == nullptr) return;
 
-  // set whole screen to purple
   SDL_SetRenderTarget(ren, tex);
-  // SDL_SetRenderDrawColor(ren, 0x77, 0x00, 0xFF, 0xFF);
-  // SDL_RenderClear(ren);
 
-#if 1 
   for (int row = 0; row < num_rows; row++) {
     for (int col = 0; col < num_cols; col++) {
       int offset = row * num_cols + col;
@@ -162,19 +173,13 @@ void TermWin::redraw()
       SDL_FreeSurface(cellSurf);
     }
   }
-#endif
 
-#if 0
-  SDL_Rect rect;
-  rect.x = rect.w = 100;
-  rect.y = rect.h = 100;
-  SDL_RenderClear(ren);
-  SDL_RenderFillRect(ren, &rect);
-  SDL_RenderDrawRect(ren, &rect);
-#endif
+  SDL_Rect screen_rect;
+  screen_rect.x = screen_rect.y = 0;
+  SDL_GetWindowSize(win, &screen_rect.w, &screen_rect.h);
 
   SDL_SetRenderTarget(ren, nullptr);
-  SDL_RenderCopy(ren, tex, nullptr, nullptr);
+  SDL_RenderCopy(ren, tex, &screen_rect, &screen_rect);
   SDL_RenderPresent(ren);
 
   for (int i = 0; i < num_cols * num_rows; i++) {

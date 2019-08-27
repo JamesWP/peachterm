@@ -5,13 +5,15 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+
 
 namespace io {
 PseudoTerminal::PseudoTerminal(data_read_cb data_cb)
     : _data_cb(data_cb), write_buffer(1024, '\0'),
       read_buffer(1024, '\0'), stream{service}, work{service} {}
 
-PseudoTerminal::~PseudoTerminal() { service.stop(); }
+PseudoTerminal::~PseudoTerminal() { service.stop(); t.join(); }
 
 void PseudoTerminal::read_complete() {
   stream.async_read_some(
@@ -19,6 +21,7 @@ void PseudoTerminal::read_complete() {
       [this](const boost::system::error_code &err, long unsigned int length) {
         if (err) {
           std::cerr << "Error message: " << err.message() << "\n";
+          this->_data_cb(this, nullptr, 0u);
           return;
         }
 
@@ -26,45 +29,106 @@ void PseudoTerminal::read_complete() {
       });
 }
 
+void PseudoTerminal::write(char data) { write(&data, 1u); }
+
 void PseudoTerminal::write(const char *data, size_t len) {
+  std::cout << "Write pt length= " << len << ": ";
+  size_t _len = len;
+  for (const char *d = data; _len-- > 0; d++) {
+    if (std::isprint(*d)) {
+      std::cout << *d;
+    } else {
+      std::cout << '\\' << 'x' << std::hex << (int)*d << std::dec;
+    }
+  }
+  std::cout << '\n';
+
   boost::asio::write(
       stream, boost::asio::buffer(data, len));
 }
 
-void PseudoTerminal::start() {
+bool PseudoTerminal::start() {
   std::cout << "Start PT\n";
- 
-  int listenfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
-  struct sockaddr_un serv_addr;
+  parentfd = posix_openpt(O_RDWR | O_NOCTTY);
 
-  serv_addr.sun_family = AF_UNIX;
-  strncpy(serv_addr.sun_path, "socket", sizeof(serv_addr.sun_path));
+  if (parentfd == -1) {
+    return false;
+  }
+  
+  fcntl(parentfd, F_SETFL, fcntl(parentfd, F_GETFL) | O_NONBLOCK);
 
-  unlink("socket");
+  if (grantpt(parentfd) == -1) {
+    return false;
+  }
 
-  bind(listenfd, reinterpret_cast<struct sockaddr *>(&serv_addr), sizeof(serv_addr));
+  if (unlockpt(parentfd) == -1) {
+    return false;
+  }
 
-  listen(listenfd, 1);
+  char *pts_name = ptsname(parentfd);
 
-  std::cout << "Waiting to accept connection on socket\n";
+  if (pts_name == nullptr) {
+    return false;
+  }
+  
+  childfd = open(pts_name, O_RDWR | O_NOCTTY);
 
-  int masterfd = accept(listenfd, nullptr, nullptr);
+  if (childfd == -1) {
+    return false;
+  }
 
-  stream.assign(masterfd);
+  return true;
+}
 
-  std::thread thread{[this]() {
-    std::cout << "IO thread\n";
+bool PseudoTerminal::set_size(int rows, int cols) 
+{
+  struct winsize ws;
+  ws.ws_row = rows;
+  ws.ws_col = cols;
 
-    this->service.run();
+  return -1 != ioctl(parentfd, TIOCSWINSZ, &ws);
+}
 
-    std::cout << "IO thread exiting\n";
-  }};
+bool PseudoTerminal::fork_child() {
 
-  t.swap(thread);
+  pid_t p = fork();
+  if (p == 0) {
+    close(parentfd);
 
-  std::cout << "Accepted connection connection on socket\n";
+    setsid();
 
-  read_complete();
+    if (ioctl(childfd, TIOCSCTTY, nullptr) == -1) {
+      return false;
+    }
+  
+    dup2(childfd, 0);
+    dup2(childfd, 1);
+    dup2(childfd, 2);
+    close(childfd);
+
+    execlp("/usr/bin/bash", "-/usr/bin/bash", nullptr);
+    return false;
+  } else if (p > 0) {
+    close(childfd);
+
+    stream.assign(parentfd);
+
+    std::thread thread{[this]() {
+      std::cout << "IO thread\n";
+
+      this->service.run();
+
+      std::cout << "IO thread exiting\n";
+    }};
+
+    std::swap(t, thread);
+
+    read_complete();
+
+    return true;
+  }
+
+  return false;
 }
 } // namespace io

@@ -42,6 +42,12 @@ void VTParser::parse_input(const char *input, size_t length) {
     if (length == 1u) {
       char c = input[last_pos];
       parse_input(c);
+    } else if (length == 2u &&
+               ((input[last_pos] == '\r' && input[last_pos + 1] == '\n') ||
+                (input[last_pos] == '\n' && input[last_pos + 1] == '\r'))) {
+      // for some reason the character breaker combines return and newline
+      on_return();
+      on_newline();
     } else {
       on_glyph(input + last_pos, length);
     }
@@ -54,6 +60,7 @@ void VTParser::parse_input(const char *input, size_t length) {
 
 bool is_final_csi(char c) { return c >= 0x40 && c <= 0x7c; }
 bool is_final_osi(char c) { return c == 7; }
+bool is_final_osi(char c, char b) { return c == '\\' && b == '\33'; }
 
 void VTParser::parse_input(char c) {
   switch (state) {
@@ -96,16 +103,23 @@ void VTParser::parse_input(char c) {
   case STATE::CSI:
     command.push_back(c);
     if (is_final_csi(c)) {
-      on_csi(command.data(), command.size());
+      dispatch_csi(command.data(), command.size());
       state = STATE::NORMAL;
     }
     break;
   case STATE::OSI:
     command.push_back(c);
+
     if (is_final_osi(c)) {
-      on_osi(command.data(), command.size());
+      dispatch_osi(command.data(), command.size());
       state = STATE::NORMAL;
     }
+
+    if (command.size() > 1 && is_final_osi(c, *std::prev(command.end(), 2u))) {
+      dispatch_osi(command.data(), command.size());
+      state = STATE::NORMAL;
+    }
+
     break;
   case STATE::CHARSET:
     state = STATE::NORMAL;
@@ -118,12 +132,30 @@ void VTParser::parse_input(char c) {
   }
 }
 
-void VTParser::on_osi(const char *, size_t) {}
-
-void VTParser::on_csi(const char *data, size_t length) {
-  std::cout << "CSI: '";
+void VTParser::dispatch_osi(const char *data, size_t length) {
+  std::cout << "OSI: '";
   std::cout.write(data, length);
   std::cout << "'\n";
 }
+
+void VTParser::dispatch_csi(const char *data, size_t length) {
+  char operation = data[length - 1];
+
+  std::cout << "CSI (" << operation << ") : '";
+  std::cout.write(data, length);
+  std::cout << "'\n";
+
+  switch (operation) {
+  case 'm':
+    return on_csi_m(data, length);
+  case 'K':
+    return on_csi_K(data, length);
+  default:
+    return;
+  }
+}
+
+void VTParser::on_csi_m(const char *, size_t) {}
+void VTParser::on_csi_K(const char *, size_t) {}
 
 } // namespace parser
