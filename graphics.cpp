@@ -132,60 +132,73 @@ void TermWin::redraw()
 
   for (int row = 0; row < num_rows; row++) {
     for (int col = 0; col < num_cols; col++) {
+      // Cell locaiton.
       int offset = row * num_cols + col;
       const TermCell &cell = cels[offset];
-      bool is_cursor = row == curs_row && col == curs_col;
+      int cell_top_y = row * cell_height;
+      int cell_left_x = col * cell_width;
 
-      if (!dirty[offset] && !is_cursor)
-        continue;
-
+      // Cell content.
       const char *glyph = cell.glyph.c_str();
 
+      // Cell color.
       SDL_Color fg, bg;
-
       fg.r = (cell.fg_col & 0xFF000000) >> 24;
       fg.g = (cell.fg_col & 0x00FF0000) >> 16;
       fg.b = (cell.fg_col & 0x0000FF00) >> 8;
       fg.a = 0xFF;
-
       bg.r = (cell.bg_col & 0xFF000000) >> 24;
       bg.g = (cell.bg_col & 0x00FF0000) >> 16;
       bg.b = (cell.bg_col & 0x0000FF00) >> 8;
       bg.a = 0xFF;
 
+      // Cursor.
+      bool is_cursor = row == curs_row && col == curs_col;
+      int curs_height = 2;
+
+      // Rectangle for the cell.
+      SDL_Rect cell_rect;
+      cell_rect.w = cell_width;
+      cell_rect.h = cell_height;
+      cell_rect.x = cell_left_x;
+      cell_rect.y = cell_top_y;
+      
+      // Rectangle for the cursor.
+      SDL_Rect curs_rect;
+      curs_rect.w = cell_width;
+      curs_rect.h = curs_height;
+      curs_rect.x = cell_left_x;
+      curs_rect.y = cell_top_y + cell_height - curs_height;
+
+      // Cell font;
       TTF_Font *font;
-    
       if (!cell.bold && !cell.italic) font = fontRegular;
       if (!cell.bold && cell.italic) font = fontRegularItalic;
       if (cell.bold && !cell.italic) font = fontBold;
       if (cell.bold && cell.italic) font = fontBoldItalic;
 
+      // And now, actual drawing.
+
+      // Don't draw an unchanged cell, ..., unless it's the cursor.
+      if (!dirty[offset] && !is_cursor)
+        continue;
+
+      // Clear cursor.
+      SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
+      SDL_RenderFillRect(ren, &curs_rect);
+
+      // Begin draw character.
       SDL_Surface *cellSurf = TTF_RenderUTF8_Shaded(font, glyph, fg, bg);
-
       SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
-
-      SDL_Rect cellTex_rect;
-      cellTex_rect.x = col * cell_width;
-      cellTex_rect.y = row * cell_height;
-      cellTex_rect.w = cell_width;
-      cellTex_rect.h = cell_height;
-
-      cellTex_rect.h = font_height;
-
-      SDL_RenderCopy(ren, cellTex, NULL, &cellTex_rect);
-
+      SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
       SDL_DestroyTexture(cellTex);
       SDL_FreeSurface(cellSurf);
 
-      const SDL_Color &curs_col = is_cursor ? fg : bg;
-
-      SDL_SetRenderDrawColor(ren, curs_col.r, curs_col.g, curs_col.b, 0xFF);
-
-      int curs_height = 2;
-      cellTex_rect.h = 2;
-      cellTex_rect.y += cell_height - curs_height;
-
-      SDL_RenderFillRect(ren, &cellTex_rect);
+      if (is_cursor) {
+        // Begin draw cursor.
+        SDL_SetRenderDrawColor(ren, fg.r, fg.g, fg.b, 0xFF);
+        SDL_RenderFillRect(ren, &curs_rect);
+      }
     }
   }
 
