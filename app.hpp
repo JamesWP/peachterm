@@ -29,6 +29,10 @@ public:
 
   void toggle_bold();
   void toggle_italic();
+
+  void scroll_up();
+
+  void move_rows(int top_row, int bottom_row, int rows_up);
 };
 
 void run();

@@ -20,18 +20,28 @@ void VTerm::overwriteglyph(const char *input, size_t len) {
   window.set_cell(row, col, cell);
 }
 
+void VTerm::scroll_up() { move_rows(scroll_row_start, scroll_row_end, 1); }
+
+void VTerm::move_rows(int top_row, int bottom_row, int rows_up)
+{
+  // TODO: implement
+  (void)top_row;
+  (void)bottom_row;
+  (void)rows_up;
+}
+
 void VTerm::putglyph(const char *input, size_t len) {
-  overwriteglyph(input, len);
-
-  col++;
-
-  if (col >= cols) {
+  if (col>=cols){
     col = 0;
     row++;
   }
 
-  if (row >= rows) {
-    row = rows - 1;
+  overwriteglyph(input, len);
+
+  col++;
+
+  if (row - 1 == scroll_row_end) {
+    scroll_up();
   }
 }
 
