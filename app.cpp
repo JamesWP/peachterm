@@ -64,33 +64,6 @@ void VTerm::curs_backspace() {
   curs_clamp(row, col, rows, cols);
 }
 
-void VTerm::toggle_bold() { cell.bold = !cell.bold; }
-
-void VTerm::toggle_italic() { cell.italic = !cell.italic; }
-
-void VTerm::set_fg_red(int red) {
-  cell.fg_col &= 0x00FFFFFF;
-  cell.fg_col |= (red & 0xFF) << 24;
-}
-
-void VTerm::set_fg_green(int green) {
-  cell.fg_col &= 0xFF00FFFF;
-  cell.fg_col |= (green & 0xFF) << 16;
-}
-
-void VTerm::set_fg_blue(int blue) {
-  cell.fg_col &= 0xFFFF00FF;
-  cell.fg_col |= (blue & 0xFF) << 8;
-}
-
-int VTerm::fg_red() const { return ((cell.fg_col & 0xFF000000) >> 24) & 0xFF; }
-
-int VTerm::fg_green() const {
-  return ((cell.fg_col & 0x00FF0000) >> 16) & 0xFF;
-}
-
-int VTerm::fg_blue() const { return ((cell.fg_col & 0x0000FF00) >> 8) & 0xFF; }
-
 } // namespace app
 
 size_t strnlen_s(const char* s, size_t len)

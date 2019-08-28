@@ -4,9 +4,13 @@
 namespace app {
 class VTerm {
 protected:
+  // row and column indexes are 0 based.
   int row{0};
   int col{0};
-  
+
+  int scroll_row_start{0};
+  int scroll_row_end{23};
+
   int rows{24};
   int cols{80};
 
@@ -25,13 +29,6 @@ public:
 
   void toggle_bold();
   void toggle_italic();
-
-  void set_fg_red(int red);
-  int fg_red() const;
-  void set_fg_green(int green);
-  int fg_green() const;
-  void set_fg_blue(int blue);
-  int fg_blue() const;
 };
 
 void run();
