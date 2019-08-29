@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <vector>
+#include <string_view>
 
 #include <boost/asio.hpp>
 
@@ -40,6 +41,7 @@ public:
   // allow next read to happen
 
   // perform write to child application
+  void write(std::string_view data);
   void write(const char *data, size_t len);
   void write(char c);
 

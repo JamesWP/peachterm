@@ -2,6 +2,7 @@
 #include "graphics.hpp"
 #include "io.hpp"
 #include "parser.hpp"
+#include "keyboard.hpp"
 
 #include <SDL.h>
 #include <chrono>
@@ -189,13 +190,8 @@ void app::run()
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
           return;
-        case SDLK_RETURN:
-          pt.write('\n');
-          break;
-        case SDLK_BACKSPACE:
-          pt.write('\b');
-          break;
         default: {
+          pt.write(keyboard::convert_to_input(&e.key));
         }
         }
       } break;

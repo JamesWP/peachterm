@@ -31,6 +31,10 @@ void PseudoTerminal::read_complete() {
 
 void PseudoTerminal::write(char data) { write(&data, 1u); }
 
+void PseudoTerminal::write(std::string_view data) {
+  write(data.data(), data.size());
+}
+
 void PseudoTerminal::write(const char *data, size_t len) {
   std::cout << "Write pt length= " << len << ": ";
   size_t _len = len;
@@ -38,7 +42,7 @@ void PseudoTerminal::write(const char *data, size_t len) {
     if (std::isprint(*d)) {
       std::cout << *d;
     } else {
-      std::cout << '\\' << 'x' << std::hex << (int)*d << std::dec;
+      std::cout << '\\' << 'x' << std::hex << (int)(*d & 0xFF) << std::dec;
     }
   }
   std::cout << '\n';
