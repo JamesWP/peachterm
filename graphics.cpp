@@ -237,15 +237,23 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
                                             : row_it(end_row - amount),
                          row_it(end_row));
 
-  (void) mid;
+  TermCell clear;
 
   // TODO: clear
   if (d == Direction::UP) {
     // blank lines are at the end.
     // clear mid - end.
+    auto end = row_it(end_row);
+    for (auto b = mid; b != end; b++) {
+      *b = clear;
+    }
   } else {
     // blank lines are at the start.
     // clear start - mid.
+    auto begin = row_it(begin_row);
+    for (auto b = begin; b != mid; b++) {
+      *b = clear;
+    }
   }
 }
 

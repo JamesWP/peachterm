@@ -20,20 +20,28 @@ void VTerm::overwriteglyph(const char *input, size_t len) {
   window.set_cell(row, col, cell);
 }
 
+void VTerm::start_new_row() {
+  // If the next row has put us beyond the scroll region:
+  if (row == scroll_row_end) {
+    // scroll up and start the last line again.
+    window.scroll(scroll_row_begin, scroll_row_end, gfx::Direction::UP, 1);
+    row = scroll_row_end - 1;
+  }
+}
+
 void VTerm::putglyph(const char *input, size_t len) {
+
+  // If we are of the rightmost column, we start the next row.
   if (col>=cols){
     col = 0;
     row++;
+
+    start_new_row();
   }
 
   overwriteglyph(input, len);
 
   col++;
-
-  if (row == scroll_row_end) {
-    window.scroll(scroll_row_begin, scroll_row_end, gfx::Direction::UP, 1);
-    row = scroll_row_end -1;
-  }
 }
 
 void clamp(int& v, int min, int max) {
@@ -49,6 +57,8 @@ void curs_clamp(int& row, int& col, int rows, int cols) {
 void VTerm::curs_newline() {
   row++;
   col = 0;
+
+  start_new_row();
 
   curs_clamp(row, col, rows, cols);
 }
@@ -85,6 +95,10 @@ class App : public parser::VTParser, public app::VTerm
       void on_glyph(const char *data, size_t length) override {
         putglyph(data, length);
         window.move_cursor(row, col);
+#if 0
+        window.redraw();
+        SDL_Delay(10);
+#endif
       }
 
       void on_backspace() override {
