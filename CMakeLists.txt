@@ -26,3 +26,10 @@ target_include_directories(parser-main PRIVATE /usr/include)
 target_link_libraries(parser-main PRIVATE jterm gtest gmock gtest_main)
 target_compile_options(parser-main PRIVATE -Wall -Wextra -Werror)
 add_test(NAME parser-unit-tests COMMAND parser-main)
+
+add_executable(util-main util.m.cpp)
+target_include_directories(util-main PRIVATE /usr/include)
+target_link_libraries(util-main PRIVATE jterm gtest gmock gtest_main)
+target_compile_options(util-main PRIVATE -Wall -Wextra -Werror)
+add_test(NAME util-unit-tests COMMAND util-main)
+

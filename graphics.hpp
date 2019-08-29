@@ -3,6 +3,8 @@
 #include <vector>
 #include <tuple>
 
+#include "util.hpp"
+
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
@@ -44,6 +46,8 @@ public:
   }
 };
 
+enum class Direction { UP, DOWN };
+
 class TermWin {
   SDL_Window *win;
   SDL_Renderer *ren;
@@ -54,8 +58,8 @@ class TermWin {
   TTF_Font *fontBold;
   TTF_Font *fontBoldItalic;
 
-  std::vector<TermCell> cels;
-  std::vector<bool> dirty;
+  std::vector<util::DirtyTracker<TermCell>> cels;
+
   int num_rows;
   int num_cols;
   int cell_width = 6;
@@ -75,7 +79,9 @@ public:
   void set_cell(int row, int col, TermCell cell);
   void clear_cells(TermCell cell = TermCell{});
   void redraw();
+  void dirty();
   void move_cursor(int row, int col);
+  void scroll(int begin_row, int end_row, Direction d, int amount);
 };
 
 } // namespace gfx

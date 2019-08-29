@@ -20,16 +20,6 @@ void VTerm::overwriteglyph(const char *input, size_t len) {
   window.set_cell(row, col, cell);
 }
 
-void VTerm::scroll_up() { move_rows(scroll_row_start, scroll_row_end, 1); }
-
-void VTerm::move_rows(int top_row, int bottom_row, int rows_up)
-{
-  // TODO: implement
-  (void)top_row;
-  (void)bottom_row;
-  (void)rows_up;
-}
-
 void VTerm::putglyph(const char *input, size_t len) {
   if (col>=cols){
     col = 0;
@@ -40,8 +30,9 @@ void VTerm::putglyph(const char *input, size_t len) {
 
   col++;
 
-  if (row - 1 == scroll_row_end) {
-    scroll_up();
+  if (row == scroll_row_end) {
+    window.scroll(scroll_row_begin, scroll_row_end, gfx::Direction::UP, 1);
+    row = scroll_row_end -1;
   }
 }
 
@@ -92,7 +83,6 @@ class App : public parser::VTParser, public app::VTerm
       App(int rows, int cols) : app::VTerm{rows, cols} {}
 
       void on_glyph(const char *data, size_t length) override {
-        std::cout << "on_glyph length: " << length << "\n";
         putglyph(data, length);
         window.move_cursor(row, col);
       }
@@ -199,6 +189,11 @@ void app::run()
         char *input = e.text.text;
         size_t len = strnlen_s(input, sizeof(decltype(e.text.text)));
         pt.write(input, len);
+      } break;
+      case SDL_MOUSEBUTTONDOWN: {
+        std::cout << "Clean redraw\n";
+        term.window.dirty();
+        term.window.redraw();
       } break;
       default: {
       }

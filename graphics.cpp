@@ -2,9 +2,10 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <algorithm>
 #include <cairo.h>
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 namespace gfx {
@@ -86,7 +87,6 @@ void TermWin::resize_window(int rows, int cols)
   const int tex_height = num_rows * cell_height;
 
   cels.resize(num_rows * num_cols);
-  dirty.resize(num_rows * num_cols);
 
   SDL_SetWindowSize(win, tex_width, tex_height);
 
@@ -110,10 +110,7 @@ void TermWin::set_cell(int row, int col, TermCell cell)
 
   const size_t offset = row * num_cols + col;
 
-  if (cels[offset] != cell) {
-    cels[offset] = cell;
-    dirty[offset] = true;
-  }
+  cels[offset] = cell;
 }
 
 void TermWin::clear_cells(TermCell cell) {
@@ -121,6 +118,12 @@ void TermWin::clear_cells(TermCell cell) {
     for (int col = 0; col < num_cols; col++) {
        set_cell(row, col, cell);
     }
+  }
+}
+
+void TermWin::dirty() {
+  for (auto &c : cels) {
+    c.dirty() = true;
   }
 }
 
@@ -134,7 +137,8 @@ void TermWin::redraw()
     for (int col = 0; col < num_cols; col++) {
       // Cell locaiton.
       int offset = row * num_cols + col;
-      const TermCell &cell = cels[offset];
+      const TermCell &cell = cels[offset].value();
+      bool dirty = cels[offset].dirty();
       int cell_top_y = row * cell_height;
       int cell_left_x = col * cell_width;
 
@@ -180,7 +184,7 @@ void TermWin::redraw()
       // And now, actual drawing.
 
       // Don't draw an unchanged cell, ..., unless it's the cursor.
-      if (!dirty[offset] && !is_cursor)
+      if (!dirty && !is_cursor)
         continue;
 
       // Clear cursor.
@@ -198,6 +202,9 @@ void TermWin::redraw()
         // Begin draw cursor.
         SDL_SetRenderDrawColor(ren, fg.r, fg.g, fg.b, 0xFF);
         SDL_RenderFillRect(ren, &curs_rect);
+        cels[offset].dirty() = true;
+      } else {
+        cels[offset].dirty() = false;
       }
     }
   }
@@ -211,17 +218,35 @@ void TermWin::redraw()
   SDL_RenderCopy(ren, tex, &screen_rect, &screen_rect);
 
   SDL_RenderPresent(ren);
-
-  for (int i = 0; i < num_cols * num_rows; i++) {
-    dirty[i] = 0;
-  }
-  
-  dirty[curs_row * num_cols + curs_col] = 1;
 }
 
 void TermWin::move_cursor(int row, int col) {
   curs_row = row;
   curs_col = col;
+}
+
+void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
+  std::cout << "Scrolling rows " << begin_row << " - " << end_row << " ";
+  std::cout << (d == Direction::UP ? "UP" : "DOWN") << " by "
+            << amount << "\n";
+
+  auto row_it = [&](int row) { return cels.begin() + num_cols * row; };
+
+  auto mid = std::rotate(row_it(begin_row),
+                         d == Direction::UP ? row_it(begin_row + amount)
+                                            : row_it(end_row - amount),
+                         row_it(end_row));
+
+  (void) mid;
+
+  // TODO: clear
+  if (d == Direction::UP) {
+    // blank lines are at the end.
+    // clear mid - end.
+  } else {
+    // blank lines are at the start.
+    // clear start - mid.
+  }
 }
 
 } // namespace gfx
