@@ -27,6 +27,7 @@ public:
   void curs_newline();
   void curs_backspace();
   void curs_to_col(int col);
+  void curs_to_row(int row);
 
   void toggle_bold();
   void toggle_italic();

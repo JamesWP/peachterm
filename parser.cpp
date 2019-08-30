@@ -141,21 +141,51 @@ void VTParser::dispatch_osi(const char *data, size_t length) {
 void VTParser::dispatch_csi(const char *data, size_t length) {
   char operation = data[length - 1];
 
-  std::cout << "CSI (" << operation << ") : '";
+  static std::vector<int> args;
+  static std::string options;
+
+  args.clear();
+  options.clear();
+
+  for (const char *pos = data; pos < data + length - 1;) {
+    if (*pos == '\0')
+      break;
+
+    if (std::isdigit(*pos)) {
+      char *end;
+      long argv = std::strtol(pos, &end, 10);
+      pos = end;
+      args.push_back(argv);
+    } else if (*pos == ';') {
+      // ignore seperator.
+      pos++;
+    } else {
+      options.push_back(*pos);
+      pos++;
+    }
+  }
+
+  std::cout << "CSI (" << operation << ") ";
+
+  std::cout << "(";
+  for (int arg : args) {
+    std::cout << arg << ' ';
+  }
+  std::cout << ") ";
+
+  std::cout << "[";
+  std::cout << options;
+  std::cout << "]";
+
+  std::cout << " : '";
   std::cout.write(data, length);
   std::cout << "'\n";
 
-  switch (operation) {
-  case 'm':
-    return on_csi_m(data, length);
-  case 'K':
-    return on_csi_K(data, length);
-  default:
-    return;
-  }
+
+  on_csi(operation, args, options);
 }
 
-void VTParser::on_csi_m(const char *, size_t) {}
-void VTParser::on_csi_K(const char *, size_t) {}
+void on_csi(char /*op*/, const std::vector<int> & /*args*/,
+            std::string_view /*options*/) {}
 
 } // namespace parser

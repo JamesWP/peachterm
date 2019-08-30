@@ -73,9 +73,9 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
 
   SDL_Keymod modifiers = SDL_GetModState();
 
-  bool shift = modifiers & SDLK_LSHIFT || modifiers & SDLK_RSHIFT;
-  bool alt = modifiers & SDLK_LALT || modifiers & SDLK_RALT;
-  bool ctrl = modifiers & SDLK_LCTRL || modifiers & SDLK_RCTRL;
+  bool shift = modifiers & KMOD_LSHIFT || modifiers & KMOD_RSHIFT;
+  bool alt = modifiers & KMOD_LALT || modifiers & KMOD_RALT;
+  bool ctrl = modifiers & KMOD_LCTRL || modifiers & KMOD_RCTRL;
 
   int sym = e->keysym.sym;
 

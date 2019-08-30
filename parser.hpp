@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 #include <iostream>
+#include <vector>
+#include <string_view>
 
 namespace parser {
 
@@ -32,9 +34,12 @@ public:
   virtual void on_bell(){};
   virtual void on_backspace(){};
   virtual void on_charset(char c) { (void)c; };
-
-  virtual void on_csi_m(const char *, size_t);
-  virtual void on_csi_K(const char *, size_t);
+  virtual void on_csi(char op, const std::vector<int>& args,
+                      std::string_view options) {
+    (void)op;
+    (void)args;
+    (void)options;
+  }
 };
 
 } // namespace parser

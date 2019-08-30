@@ -64,8 +64,14 @@ void VTerm::curs_newline() {
   curs_clamp(row, col, rows, cols);
 }
 
-void VTerm::curs_to_col(int col) {
-  col = 0;
+void VTerm::curs_to_col(int _col) {
+  col = _col;
+
+  curs_clamp(row, col, rows, cols);
+}
+
+void VTerm::curs_to_row(int _row) {
+  row = _row;
 
   curs_clamp(row, col, rows, cols);
 }
@@ -120,9 +126,50 @@ class App : public parser::VTParser, public app::VTerm
         window.move_cursor(row, col);
       }
 
-      void on_csi_K(const char *, size_t) override {
-        char space = ' ';
-        overwriteglyph(&space, 1u);
+      void adjust_cursor(int rows_n, int cols_n) {
+        curs_to_col(col + cols_n);
+        curs_to_row(row + rows_n);
+        window.move_cursor(row, col);
+      }
+
+      void perform_el(int arg) {
+        switch (arg) {
+        case 0: // Erase to right.
+          window.clear_cells(row, col, cols);
+          return;
+        case 1: // Erase to left.
+          window.clear_cells(row, 0, col);
+          return;
+        case 2: // Erase all.
+          window.clear_cells(row, 0, cols);
+          return;
+        }
+      }
+
+      void on_csi(char operation, const std::vector<int>& args,
+                  std::string_view /*options*/) override {
+        auto arg = [&](int arg, int def = 0) {
+          return ((int)args.size() - 1 > arg) ? args[arg] : def;
+        };
+
+        // clang-format off
+        switch (operation) {
+        case '@': window.insert_cells(row, col, arg(0, 1)); break;
+        case 'A': adjust_cursor(-1, 0);                     break;
+        case 'B': adjust_cursor(1, 0);                      break;
+        case 'C': adjust_cursor(0, 1);                      break;
+        case 'D': adjust_cursor(0, -1);                     break;
+        case 'E':
+        case 'F':
+        case 'G':
+        case 'H':
+        case 'I':
+        case 'J': break;
+        case 'K': perform_el(arg(0));                   break;
+        }
+        // clang-format on
+
+        window.move_cursor(row, col);
       }
 };
 
@@ -145,6 +192,8 @@ void app::run()
 
   int rows = 24;
   int cols = 80;
+
+  std::string pending_input;
 
   if (!pt.start()) {
     std::cerr << "Start failed\n";
@@ -170,7 +219,7 @@ void app::run()
   while (true) {
     while (SDL_PollEvent(&e) != 0) {
       if (e.type == data_available_event) {
-        std::cout << "SDL Event\n";
+        std::cout << "SDL Child Data Event\n";
         const char *data = static_cast<const char *>(e.user.data1);
         size_t len = reinterpret_cast<size_t>(e.user.data2);
 
@@ -191,14 +240,22 @@ void app::run()
         case SDLK_ESCAPE:
           return;
         default: {
-          pt.write(keyboard::convert_to_input(&e.key));
+          pending_input = keyboard::convert_to_input(&e.key);
         }
+        }
+      } break;
+      case SDL_KEYUP: {
+        if (!pending_input.empty()) {
+          std::cout << "SDL Keypress\n";
+          pt.write(pending_input);
+          pending_input.clear();
         }
       } break;
       case SDL_TEXTINPUT: {
         char *input = e.text.text;
         size_t len = strnlen_s(input, sizeof(decltype(e.text.text)));
         pt.write(input, len);
+        pending_input.clear();
       } break;
       case SDL_MOUSEBUTTONDOWN: {
         std::cout << "Clean redraw\n";

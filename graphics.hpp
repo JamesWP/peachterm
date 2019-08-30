@@ -77,7 +77,9 @@ public:
 
   void resize_window(int rows, int cols);
   void set_cell(int row, int col, TermCell cell);
-  void clear_cells(TermCell cell = TermCell{});
+  void clear_cells(TermCell cell = {});
+  void clear_cells(int row, int begin_col, int end_col, TermCell cell = {});
+  void insert_cells(int row, int col, int number, TermCell cell = {});
   void redraw();
   void dirty();
   void move_cursor(int row, int col);
