@@ -17,7 +17,9 @@ protected:
 
 public:
   gfx::TermWin window;
+
   gfx::TermCell cell;
+  gfx::TermCell reset;
 
   VTerm(int rows, int cols);
 
@@ -29,8 +31,33 @@ public:
   void curs_to_col(int col);
   void curs_to_row(int row);
 
-  void toggle_bold();
-  void toggle_italic();
+  void cell_set_(gfx::TermCell::Attr attr);
+  void cell_reset_(gfx::TermCell::Attr attr);
+
+  template <typename... As>
+  void cell_set(As... as) {
+    auto f = [this](auto arg) {
+      cell_set_(arg);
+      return true;
+    };
+
+    bool X[] = {(f(as))...};
+    (void) X;
+  }
+
+  template <typename... As>
+  void cell_reset(As... as) {
+    auto f = [this](auto arg) {
+      cell_reset_(arg);
+      return true;
+    };
+
+    bool X[] = {f(as) ...};
+    (void) X;
+  }
+
+  void cell_set_fg(uint32_t);
+  void cell_set_bg(uint32_t);
 
   void scroll_up();
 

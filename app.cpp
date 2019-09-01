@@ -3,6 +3,7 @@
 #include "io.hpp"
 #include "parser.hpp"
 #include "keyboard.hpp"
+#include "colors.hpp"
 
 #include <SDL.h>
 #include <chrono>
@@ -82,6 +83,32 @@ void VTerm::curs_backspace() {
   curs_clamp(row, col, rows, cols);
 }
 
+bool& get_attr(gfx::TermCell &cell, gfx::TermCell::Attr attr) {
+  static bool b = false;
+  using Attr = gfx::TermCell::Attr;
+  // clang-format off
+  switch (attr) {
+  case Attr::BOLD:       return cell.bold;
+  case Attr::ITALIC:     return cell.italic;
+  case Attr::OVERLINE:   return cell.overline;
+  case Attr::UNDERLINE:  return cell.underline;
+  case Attr::DUNDERLINE: return cell.dunderline;
+  case Attr::STRIKE:     return cell.strike;
+  case Attr::FEINT:      return cell.feint;
+  case Attr::REVERSE:    return cell.reverse;
+  case Attr::FG: case Attr::BG: default: return b;
+  }
+  // clang-format on
+}
+
+void VTerm::cell_set_(gfx::TermCell::Attr attr) {
+  get_attr(cell, attr) = true;
+}
+
+void VTerm::cell_reset_(gfx::TermCell::Attr attr) {
+  get_attr(cell, attr) = get_attr(reset, attr);
+}
+
 } // namespace app
 
 size_t strnlen_s(const char* s, size_t len)
@@ -146,6 +173,100 @@ class App : public parser::VTParser, public app::VTerm
         }
       }
 
+      void csi_m(const std::vector<int>& args) {
+        using A = gfx::TermCell::Attr;
+
+        auto extended_color = [&](auto &i) {
+          if (++i == args.end())
+            return;
+
+          bool _256 = *i == 5;
+
+          if (++i == args.end())
+            return;
+
+          if (_256) {
+            col = colors::table[*i];
+            return;
+          }
+
+          if (++i == args.end())
+            return;
+
+          col = *i;
+          col <<= 8;
+
+          if (++i == args.end())
+            return;
+
+          col |= 0xFF & *i;
+          col <<= 8;
+
+          if (++i == args.end())
+            return;
+
+          col |= 0xFF & *i;
+          col <<= 8;
+
+          col |= 0xFF;
+        };
+
+        for (auto i = args.begin(); i != args.end(); i++) {
+          int arg = *i;
+          bool fg = arg >= 30 && arg < 40;
+          uint32_t &col = fg ? cell.fg_col : cell.bg_col;
+
+          // clang-format off
+          switch (arg) {
+          case 0: 
+            cell_reset(A::BOLD, A::ITALIC, A::OVERLINE, A::UNDERLINE, A::DUNDERLINE, A::STRIKE, 
+                       A::FEINT, A::REVERSE);
+            cell.fg_col = reset.fg_col;
+            cell.bg_col = reset.bg_col;
+                                                  break; // Reset all
+          case 1: cell_set(A::BOLD);              break;
+          case 2: cell_set(A::FEINT);             break;
+          case 3: cell_set(A::ITALIC);            break; 
+          case 4: cell_set(A::UNDERLINE);         break;
+          case 7: cell_set(A::REVERSE);           break;
+          case 9: cell_set(A::STRIKE);            break; 
+          case 21: cell_set(A::DUNDERLINE);       break;
+          case 22: cell_reset(A::BOLD, A::FEINT); break;
+          case 23: cell_reset(A::ITALIC);         break; 
+          case 24: cell_reset(A::UNDERLINE);      break;
+          case 27: cell_reset(A::REVERSE);        break;
+          case 29: cell_reset(A::STRIKE);         break;
+          case 53: cell_set(A::OVERLINE);         break;
+          case 55: cell_reset(A::OVERLINE);       break;
+
+          // Font.
+          case 10:
+            // Reset font.
+            break; 
+          case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19:
+            // Alternative font. 
+            break; 
+
+          // Color.
+          case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
+          case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
+            // Set color. 8 color.
+            col = colors::table[arg - (fg?30:40)];
+            break; 
+          case 38: case 48:
+            // Set  color
+            // Next arguments are 5;n or 2;r;g;b
+            extended_color(i);
+            break;
+          case 39: case 49:
+            // Reset color.
+            col = fg ? reset.fg_col : reset.bg_col;
+            break; 
+          }
+          // clang-format on
+        }
+      }
+
       void on_csi(char operation, const std::vector<int>& args,
                   std::string_view /*options*/) override {
         auto arg = [&](int arg, int def = 0) {
@@ -154,18 +275,19 @@ class App : public parser::VTParser, public app::VTerm
 
         // clang-format off
         switch (operation) {
-        case '@': window.insert_cells(row, col, arg(0, 1)); break;
-        case 'A': adjust_cursor(-1, 0);                     break;
-        case 'B': adjust_cursor(1, 0);                      break;
-        case 'C': adjust_cursor(0, 1);                      break;
-        case 'D': adjust_cursor(0, -1);                     break;
-        case 'E':
+        case '@': window.insert_cells(row, col, arg(0, 1));    break;
+        case 'A': adjust_cursor(-1, 0);                        break;
+        case 'B': adjust_cursor(1, 0);                         break;
+        case 'C': adjust_cursor(0, 1);                         break;
+        case 'D': adjust_cursor(0, -1);                        break;
+        case 'E': // -----------------------------------------------;
         case 'F':
         case 'G':
         case 'H':
         case 'I':
-        case 'J': break;
-        case 'K': perform_el(arg(0));                   break;
+        case 'J': break; // ----------------------------------------;
+        case 'K': perform_el(arg(0));                          break;
+        case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
         }
         // clang-format on
 

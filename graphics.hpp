@@ -34,8 +34,27 @@ struct TermCell {
   uint32_t bg_col = 0x000000FF;
   bool bold = false;
   bool italic = false;
+  bool overline = false;
+  bool underline = false;
+  bool dunderline = false;
+  bool strike = false;
+  bool feint = false;
+  bool reverse = false;
 
 public:
+  enum class Attr {
+    BOLD,
+    ITALIC,
+    FG,
+    BG,
+    OVERLINE,
+    UNDERLINE,
+    DUNDERLINE,
+    STRIKE,
+    FEINT,
+    REVERSE
+  };
+
   friend inline bool operator==(const TermCell &l, const TermCell &r) {
     return std::tie(l.fg_col, l.bg_col, l.bold, l.italic, l.glyph) ==
            std::tie(r.fg_col, r.bg_col, r.bold, r.italic, r.glyph);
