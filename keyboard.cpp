@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <unordered_map>
 
-
 namespace keyboard {
 
 static const std::unordered_map<int, std::pair<int /*num*/, char /*letter*/>>
@@ -119,11 +118,11 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
       cval &= ~0x20;
     }
 
-    if (ctrl && digit){
+    if (ctrl && digit) {
       cval = "01\0\33\34\35\36\37\1779"[cval - '0'];
     }
 
-    if (ctrl && i->second == '\177'){
+    if (ctrl && i->second == '\177') {
       cval = '\b';
     } else if (ctrl && !digit) {
       // Turn into a control character.
@@ -135,7 +134,7 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
 
     // Add ALT.
     if (alt) {
-      cval |= 0x80; 
+      cval |= 0x80;
     }
 
     if ((!alpha && !digit) || ctrl || alt) {

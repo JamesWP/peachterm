@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stddef.h>
 #include <iostream>
-#include <vector>
+#include <stddef.h>
 #include <string_view>
+#include <vector>
 
 namespace parser {
 
@@ -34,7 +34,7 @@ public:
   virtual void on_bell(){};
   virtual void on_backspace(){};
   virtual void on_charset(char c) { (void)c; };
-  virtual void on_csi(char op, const std::vector<int>& args,
+  virtual void on_csi(char op, const std::vector<int> &args,
                       std::string_view options) {
     (void)op;
     (void)args;

@@ -2,41 +2,39 @@
 
 #include <utility>
 
-namespace util{
+namespace util {
 
-  template<typename T>
-  class DirtyTracker
-  {
-    T _t;
+template <typename T> class DirtyTracker {
+  T _t;
 
-    bool _dirty = true;
+  bool _dirty = true;
 
 public:
-    DirtyTracker() {}
+  DirtyTracker() {}
 
-    explicit DirtyTracker(DirtyTracker &&t) = default;
+  explicit DirtyTracker(DirtyTracker &&t) = default;
 
-    DirtyTracker(const DirtyTracker &o) { *this = o.value(); }
-    DirtyTracker &operator=(const DirtyTracker &o) {
-      *this = o.value();
+  DirtyTracker(const DirtyTracker &o) { *this = o.value(); }
+  DirtyTracker &operator=(const DirtyTracker &o) {
+    *this = o.value();
+    return *this;
+  }
+
+  DirtyTracker(const T &t) : _t{t} {}
+
+  DirtyTracker &operator=(const T &t) {
+    if (t == _t)
       return *this;
-    }
 
-    DirtyTracker(const T &t) : _t{t} {}
+    _t = std::forward<decltype(t)>(t);
+    _dirty = true;
 
-    DirtyTracker &operator=(const T &t) {
-      if (t == _t)
-        return *this;
+    return *this;
+  }
 
-      _t = std::forward<decltype(t)>(t);
-      _dirty = true;
+  bool dirty() const { return _dirty; }
+  bool &dirty() { return _dirty; }
 
-      return *this;
-    }
-
-    bool dirty() const { return _dirty; }
-    bool &dirty() { return _dirty; }
-
-    const T &value() const { return _t; }
-  };
+  const T &value() const { return _t; }
 };
+}; // namespace util

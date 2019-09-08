@@ -3,17 +3,19 @@
 #include <chrono>
 #include <iostream>
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-
+#include <unistd.h>
 
 namespace io {
 PseudoTerminal::PseudoTerminal(data_read_cb data_cb)
     : _data_cb(data_cb), write_buffer(1024, '\0'),
       read_buffer(1024, '\0'), stream{service}, work{service} {}
 
-PseudoTerminal::~PseudoTerminal() { service.stop(); t.join(); }
+PseudoTerminal::~PseudoTerminal() {
+  service.stop();
+  t.join();
+}
 
 void PseudoTerminal::read_complete() {
   stream.async_read_some(
@@ -47,8 +49,7 @@ void PseudoTerminal::write(const char *data, size_t len) {
   }
   std::cout << '\n';
 
-  boost::asio::write(
-      stream, boost::asio::buffer(data, len));
+  boost::asio::write(stream, boost::asio::buffer(data, len));
 }
 
 bool PseudoTerminal::start() {
@@ -59,7 +60,7 @@ bool PseudoTerminal::start() {
   if (parentfd == -1) {
     return false;
   }
-  
+
   fcntl(parentfd, F_SETFL, fcntl(parentfd, F_GETFL) | O_NONBLOCK);
 
   if (grantpt(parentfd) == -1) {
@@ -75,7 +76,7 @@ bool PseudoTerminal::start() {
   if (pts_name == nullptr) {
     return false;
   }
-  
+
   childfd = open(pts_name, O_RDWR | O_NOCTTY);
 
   if (childfd == -1) {
@@ -85,8 +86,7 @@ bool PseudoTerminal::start() {
   return true;
 }
 
-bool PseudoTerminal::set_size(int rows, int cols) 
-{
+bool PseudoTerminal::set_size(int rows, int cols) {
   struct winsize ws;
   ws.ws_row = rows;
   ws.ws_col = cols;
@@ -105,7 +105,7 @@ bool PseudoTerminal::fork_child() {
     if (ioctl(childfd, TIOCSCTTY, nullptr) == -1) {
       return false;
     }
-  
+
     dup2(childfd, 0);
     dup2(childfd, 1);
     dup2(childfd, 2);

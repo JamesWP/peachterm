@@ -5,8 +5,7 @@
 using namespace ::testing;
 using namespace util;
 
-TEST(DirtyTracker, Test)
-{
+TEST(DirtyTracker, Test) {
 
   DirtyTracker<char> a;
 
@@ -30,8 +29,7 @@ TEST(DirtyTracker, Test)
   ASSERT_TRUE(a.dirty());
 }
 
-TEST(DirtyTracker, Algo)
-{
+TEST(DirtyTracker, Algo) {
   std::vector<DirtyTracker<char>> char_list;
   char_list.resize(10);
 
@@ -46,15 +44,15 @@ TEST(DirtyTracker, Algo)
   };
 
   ASSERT_EQ(10, char_list.size());
-  ASSERT_EQ(0,  num_dirty());
+  ASSERT_EQ(0, num_dirty());
 
   char_list[3] = 'B';
 
-  ASSERT_EQ(1,  num_dirty());
+  ASSERT_EQ(1, num_dirty());
 
   char_list[3].dirty() = false;
 
-  ASSERT_EQ(0,  num_dirty());
+  ASSERT_EQ(0, num_dirty());
 
   std::vector<char> new_values;
   new_values.resize(10);
@@ -62,7 +60,7 @@ TEST(DirtyTracker, Algo)
 
   std::copy(new_values.begin(), new_values.end(), char_list.begin());
 
-  ASSERT_EQ(9,  num_dirty());
+  ASSERT_EQ(9, num_dirty());
 
   for (auto &tracking_char : char_list) {
     tracking_char = 'B';

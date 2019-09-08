@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "util.hpp"
 
@@ -90,9 +90,9 @@ class TermWin {
 public:
   TermWin();
   ~TermWin();
-  
-  TermWin(const TermWin&) = delete;
-  TermWin& operator=(const TermWin&) = delete;
+
+  TermWin(const TermWin &) = delete;
+  TermWin &operator=(const TermWin &) = delete;
 
   void resize_window(int rows, int cols);
   void set_cell(int row, int col, TermCell cell);

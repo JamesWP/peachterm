@@ -25,11 +25,10 @@ context::~context() {
   SDL_Quit();
 }
 
-TermWin::TermWin()
-{
+TermWin::TermWin() {
   win = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED,
                          SDL_WINDOWPOS_UNDEFINED, 640, 480, 0);
-  
+
   SDL_SetWindowInputFocus(win);
 
   ren = SDL_CreateRenderer(win, -1, 0);
@@ -56,11 +55,10 @@ TermWin::TermWin()
 
   font_height = TTF_FontLineSkip(fontRegular);
   cell_height = font_height + 1;
-  cell_width = advance; 
+  cell_width = advance;
 }
 
-TermWin::~TermWin()
-{
+TermWin::~TermWin() {
   if (tex != nullptr) {
     SDL_DestroyTexture(tex);
     std::cout << "Texture destroyed\n";
@@ -73,8 +71,7 @@ TermWin::~TermWin()
   SDL_DestroyWindow(win);
 }
 
-void TermWin::resize_window(int rows, int cols)
-{
+void TermWin::resize_window(int rows, int cols) {
   if (tex != nullptr) {
     SDL_DestroyTexture(tex);
     std::cout << "Texture destroyed\n";
@@ -91,22 +88,23 @@ void TermWin::resize_window(int rows, int cols)
   SDL_SetWindowSize(win, tex_width, tex_height);
 
   tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888,
-                          SDL_TEXTUREACCESS_TARGET, tex_width,
-                          tex_height);
+                          SDL_TEXTUREACCESS_TARGET, tex_width, tex_height);
 
-  std::cout << "TermWin texture resize: " << tex_width << 'x'
-            << tex_height << "\n";
+  std::cout << "TermWin texture resize: " << tex_width << 'x' << tex_height
+            << "\n";
 
   clear_cells();
 
   redraw();
 }
 
-void TermWin::set_cell(int row, int col, TermCell cell)
-{
-  if (row < 0 || col < 0) return;
-  if (row >= num_rows) return;
-  if (col >= num_cols) return;
+void TermWin::set_cell(int row, int col, TermCell cell) {
+  if (row < 0 || col < 0)
+    return;
+  if (row >= num_rows)
+    return;
+  if (col >= num_cols)
+    return;
 
   const size_t offset = row * num_cols + col;
 
@@ -116,7 +114,7 @@ void TermWin::set_cell(int row, int col, TermCell cell)
 void TermWin::clear_cells(TermCell cell) {
   for (int row = 0; row < num_rows; row++) {
     for (int col = 0; col < num_cols; col++) {
-       set_cell(row, col, cell);
+      set_cell(row, col, cell);
     }
   }
 }
@@ -140,9 +138,9 @@ void TermWin::dirty() {
   }
 }
 
-void TermWin::redraw()
-{ 
-  if (tex == nullptr) return;
+void TermWin::redraw() {
+  if (tex == nullptr)
+    return;
 
   SDL_SetRenderTarget(ren, tex);
 
@@ -179,7 +177,7 @@ void TermWin::redraw()
       cell_rect.h = cell_height;
       cell_rect.x = cell_left_x;
       cell_rect.y = cell_top_y;
-      
+
       // Rectangle for the cursor.
       SDL_Rect curs_rect;
       curs_rect.w = cell_width;
@@ -189,10 +187,14 @@ void TermWin::redraw()
 
       // Cell font;
       TTF_Font *font;
-      if (!cell.bold && !cell.italic) font = fontRegular;
-      if (!cell.bold && cell.italic) font = fontRegularItalic;
-      if (cell.bold && !cell.italic) font = fontBold;
-      if (cell.bold && cell.italic) font = fontBoldItalic;
+      if (!cell.bold && !cell.italic)
+        font = fontRegular;
+      if (!cell.bold && cell.italic)
+        font = fontRegularItalic;
+      if (cell.bold && !cell.italic)
+        font = fontBold;
+      if (cell.bold && cell.italic)
+        font = fontBoldItalic;
 
       // And now, actual drawing.
 
@@ -240,8 +242,7 @@ void TermWin::move_cursor(int row, int col) {
 
 void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
   std::cout << "Scrolling rows " << begin_row << " - " << end_row << " ";
-  std::cout << (d == Direction::UP ? "UP" : "DOWN") << " by "
-            << amount << "\n";
+  std::cout << (d == Direction::UP ? "UP" : "DOWN") << " by " << amount << "\n";
 
   auto row_it = [&](int row) { return cels.begin() + num_cols * row; };
 

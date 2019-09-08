@@ -1,9 +1,9 @@
 #include "app.hpp"
+#include "colors.hpp"
 #include "graphics.hpp"
 #include "io.hpp"
-#include "parser.hpp"
 #include "keyboard.hpp"
-#include "colors.hpp"
+#include "parser.hpp"
 
 #include <SDL.h>
 #include <chrono>
@@ -11,216 +11,101 @@
 #include <string.h>
 
 namespace app {
-VTerm::VTerm(int _rows, int _cols) : rows{_rows}, cols{_cols} {
-  window.resize_window(rows, cols);
-  cell.fg_col = 0xFFFFFFFF;
-  cell.bg_col = 0x000000FF;
-}
-
-void VTerm::overwriteglyph(const char *input, size_t len) {
-  cell.glyph.assign(input, len);
-  window.set_cell(row, col, cell);
-}
-
-void VTerm::start_new_row() {
-  // If the next row has put us beyond the scroll region:
-  if (row == scroll_row_end) {
-    // scroll up and start the last line again.
-    window.scroll(scroll_row_begin, scroll_row_end, gfx::Direction::UP, 1);
-    row = scroll_row_end - 1;
-  }
-}
-
-void VTerm::putglyph(const char *input, size_t len) {
-
-  // If we are of the rightmost column, we start the next row.
-  if (col>=cols){
-    col = 0;
-    row++;
-
-    start_new_row();
-  }
-
-  overwriteglyph(input, len);
-
-  col++;
-}
-
-void clamp(int& v, int min, int max) {
-  if (v>max) v = max;
-  else if (v < min) v = min;
-}
-
-void curs_clamp(int& row, int& col, int rows, int cols) {
-  clamp(row, 0, rows);
-  clamp(col, 0, cols);
-}
-
-void VTerm::curs_newline() {
-  row++;
-  col = 0;
-
-  start_new_row();
-
-  curs_clamp(row, col, rows, cols);
-}
-
-void VTerm::curs_to_col(int _col) {
-  col = _col;
-
-  curs_clamp(row, col, rows, cols);
-}
-
-void VTerm::curs_to_row(int _row) {
-  row = _row;
-
-  curs_clamp(row, col, rows, cols);
-}
-
-void VTerm::curs_backspace() {
-  col--;
-
-  curs_clamp(row, col, rows, cols);
-}
-
-bool& get_attr(gfx::TermCell &cell, gfx::TermCell::Attr attr) {
-  static bool b = false;
-  using Attr = gfx::TermCell::Attr;
-  // clang-format off
-  switch (attr) {
-  case Attr::BOLD:       return cell.bold;
-  case Attr::ITALIC:     return cell.italic;
-  case Attr::OVERLINE:   return cell.overline;
-  case Attr::UNDERLINE:  return cell.underline;
-  case Attr::DUNDERLINE: return cell.dunderline;
-  case Attr::STRIKE:     return cell.strike;
-  case Attr::FEINT:      return cell.feint;
-  case Attr::REVERSE:    return cell.reverse;
-  case Attr::FG: case Attr::BG: default: return b;
-  }
-  // clang-format on
-}
-
-void VTerm::cell_set_(gfx::TermCell::Attr attr) {
-  get_attr(cell, attr) = true;
-}
-
-void VTerm::cell_reset_(gfx::TermCell::Attr attr) {
-  get_attr(cell, attr) = get_attr(reset, attr);
-}
-
-} // namespace app
-
-size_t strnlen_s(const char* s, size_t len)
-{
-  for (size_t size = 0; size < len; size++)
-    if (s[0] == '\0')
-      return size;
-    else
-      s++;
-  return 0;
-}
-
-class App : public parser::VTParser, public app::VTerm
-{
-    public:
-      App(int rows, int cols) : app::VTerm{rows, cols} {}
-
-      void on_glyph(const char *data, size_t length) override {
-        putglyph(data, length);
-        window.move_cursor(row, col);
+void App::on_glyph(const char *data, size_t length) {
+  putglyph(data, length);
+  window.move_cursor(row, col);
 #if 0
-        window.redraw();
-        SDL_Delay(10);
+  window.redraw();
+  SDL_Delay(10);
 #endif
-      }
+}
 
-      void on_backspace() override {
-        std::cout << "on_backspace\n";
-        curs_backspace();
-        window.move_cursor(row, col);
-      }
+void App::on_backspace() {
+  std::cout << "on_backspace\n";
+  curs_backspace();
+  window.move_cursor(row, col);
+}
 
-      void on_newline() override {
-        std::cout << "on_newline\n";
-        curs_newline();
-        window.move_cursor(row, col);
-      }
+void App::on_newline() {
+  std::cout << "on_newline\n";
+  curs_newline();
+  window.move_cursor(row, col);
+}
 
-      void on_return() override {
-        std::cout << "on_return\n";
-        curs_to_col(0);
-        window.move_cursor(row, col);
-      }
+void App::on_return() {
+  std::cout << "on_return\n";
+  curs_to_col(0);
+  window.move_cursor(row, col);
+}
 
-      void adjust_cursor(int rows_n, int cols_n) {
-        curs_to_col(col + cols_n);
-        curs_to_row(row + rows_n);
-        window.move_cursor(row, col);
-      }
+void App::adjust_cursor(int rows_n, int cols_n) {
+  curs_to_col(col + cols_n);
+  curs_to_row(row + rows_n);
+  window.move_cursor(row, col);
+}
 
-      void perform_el(int arg) {
-        switch (arg) {
-        case 0: // Erase to right.
-          window.clear_cells(row, col, cols);
-          return;
-        case 1: // Erase to left.
-          window.clear_cells(row, 0, col);
-          return;
-        case 2: // Erase all.
-          window.clear_cells(row, 0, cols);
-          return;
-        }
-      }
+void App::perform_el(int arg) {
+  switch (arg) {
+  case 0: // Erase to right.
+    window.clear_cells(row, col, cols);
+    return;
+  case 1: // Erase to left.
+    window.clear_cells(row, 0, col);
+    return;
+  case 2: // Erase all.
+    window.clear_cells(row, 0, cols);
+    return;
+  }
+}
 
-      void csi_m(const std::vector<int>& args) {
-        using A = gfx::TermCell::Attr;
+void App::csi_m(const std::vector<int> &args) {
+  using A = gfx::TermCell::Attr;
 
-        auto extended_color = [&](auto &i) {
-          if (++i == args.end())
-            return;
+  auto extended_color = [&](auto &i) {
+    if (++i == args.end())
+      return;
 
-          bool _256 = *i == 5;
+    bool _256 = *i == 5;
 
-          if (++i == args.end())
-            return;
+    if (++i == args.end())
+      return;
 
-          if (_256) {
-            col = colors::table[*i];
-            return;
-          }
+    if (_256) {
+      col = colors::table[*i];
+      return;
+    }
 
-          if (++i == args.end())
-            return;
+    if (++i == args.end())
+      return;
 
-          col = *i;
-          col <<= 8;
+    col = *i;
+    col <<= 8;
 
-          if (++i == args.end())
-            return;
+    if (++i == args.end())
+      return;
 
-          col |= 0xFF & *i;
-          col <<= 8;
+    col |= 0xFF & *i;
+    col <<= 8;
 
-          if (++i == args.end())
-            return;
+    if (++i == args.end())
+      return;
 
-          col |= 0xFF & *i;
-          col <<= 8;
+    col |= 0xFF & *i;
+    col <<= 8;
 
-          col |= 0xFF;
-        };
+    col |= 0xFF;
+  };
 
-        for (auto i = args.begin(); i != args.end(); i++) {
-          int arg = *i;
-          bool fg = arg >= 30 && arg < 40;
-          uint32_t &col = fg ? cell.fg_col : cell.bg_col;
+  for (auto i = args.begin(); i != args.end(); i++) {
+    int arg = *i;
+    bool fg = arg >= 30 && arg < 40;
+    uint32_t &col = fg ? cell.fg_col : cell.bg_col;
 
-          // clang-format off
+    // clang-format off
           switch (arg) {
           case 0: 
-            cell_reset(A::BOLD, A::ITALIC, A::OVERLINE, A::UNDERLINE, A::DUNDERLINE, A::STRIKE, 
-                       A::FEINT, A::REVERSE);
+            cell_reset(A::BOLD, A::ITALIC, A::OVERLINE, A::UNDERLINE, 
+                       A::DUNDERLINE, A::STRIKE, A::FEINT, A::REVERSE);
             cell.fg_col = reset.fg_col;
             cell.bg_col = reset.bg_col;
                                                   break; // Reset all
@@ -263,17 +148,17 @@ class App : public parser::VTParser, public app::VTerm
             col = fg ? reset.fg_col : reset.bg_col;
             break; 
           }
-          // clang-format on
-        }
-      }
+    // clang-format on
+  }
+}
 
-      void on_csi(char operation, const std::vector<int>& args,
-                  std::string_view /*options*/) override {
-        auto arg = [&](int arg, int def = 0) {
-          return ((int)args.size() - 1 > arg) ? args[arg] : def;
-        };
+void App::on_csi(char operation, const std::vector<int> &args,
+                 std::string_view /*options*/) {
+  auto arg = [&](int arg, int def = 0) {
+    return ((int)args.size() - 1 > arg) ? args[arg] : def;
+  };
 
-        // clang-format off
+  // clang-format off
         switch (operation) {
         case '@': window.insert_cells(row, col, arg(0, 1));    break;
         case 'A': adjust_cursor(-1, 0);                        break;
@@ -289,14 +174,21 @@ class App : public parser::VTParser, public app::VTerm
         case 'K': perform_el(arg(0));                          break;
         case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
         }
-        // clang-format on
+  // clang-format on
 
-        window.move_cursor(row, col);
-      }
-};
+  window.move_cursor(row, col);
+}
 
-void app::run()
-{
+size_t strnlen_s(const char *s, size_t len) {
+  for (size_t size = 0; size < len; size++)
+    if (s[0] == '\0')
+      return size;
+    else
+      s++;
+  return 0;
+}
+
+void run() {
   const uint32_t data_available_event = SDL_RegisterEvents(1);
 
   SDL_Event data_available;
@@ -390,3 +282,4 @@ void app::run()
     }
   }
 }
+} // namespace app

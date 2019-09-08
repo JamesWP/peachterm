@@ -1,71 +1,27 @@
 #pragma once
+#include "colors.hpp"
 #include "graphics.hpp"
+#include "parser.hpp"
+#include "vterm.hpp"
 
 namespace app {
-class VTerm {
-protected:
-  // row and column indexes are 0 based.
-  int row{0};
-  int col{0};
-
-  // scroll end is one past the end row.
-  int scroll_row_begin{0};
-  int scroll_row_end{24};
-
-  int rows{24};
-  int cols{80};
-
+class App : public parser::VTParser, public app::VTerm {
 public:
-  gfx::TermWin window;
+  App(int rows, int cols) : app::VTerm{rows, cols} {}
 
-  gfx::TermCell cell;
-  gfx::TermCell reset;
+  // Implement parser::VTParser interface...
+  void on_glyph(const char *data, size_t length) override;
+  void on_backspace() override;
+  void on_newline() override;
+  void on_return() override;
+  void on_csi(char operation, const std::vector<int> &args,
+              std::string_view /*options*/) override;
 
-  VTerm(int rows, int cols);
-
-  void overwriteglyph(const char *input, size_t len);
-  void putglyph(const char *input, size_t len);
-
-  void curs_newline();
-  void curs_backspace();
-  void curs_to_col(int col);
-  void curs_to_row(int row);
-
-  void cell_set_(gfx::TermCell::Attr attr);
-  void cell_reset_(gfx::TermCell::Attr attr);
-
-  template <typename... As>
-  void cell_set(As... as) {
-    auto f = [this](auto arg) {
-      cell_set_(arg);
-      return true;
-    };
-
-    bool X[] = {(f(as))...};
-    (void) X;
-  }
-
-  template <typename... As>
-  void cell_reset(As... as) {
-    auto f = [this](auto arg) {
-      cell_reset_(arg);
-      return true;
-    };
-
-    bool X[] = {f(as) ...};
-    (void) X;
-  }
-
-  void cell_set_fg(uint32_t);
-  void cell_set_bg(uint32_t);
-
-  void scroll_up();
-
-  void start_new_row();
-  // Called after row has been updated. may scroll the screen.
-
-  void move_rows(int top_row, int bottom_row, int rows_up);
-  };
+  // Helper functions.
+  void adjust_cursor(int rows_n, int cols_n);
+  void perform_el(int arg);
+  void csi_m(const std::vector<int> &args);
+};
 
 void run();
 } // namespace app

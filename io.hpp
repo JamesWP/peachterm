@@ -1,11 +1,11 @@
 #pragma once
 
-#include <functional>
-#include <thread>
-#include <mutex>
 #include <condition_variable>
-#include <vector>
+#include <functional>
+#include <mutex>
 #include <string_view>
+#include <thread>
+#include <vector>
 
 #include <boost/asio.hpp>
 
@@ -13,15 +13,13 @@ namespace io {
 class PseudoTerminal {
 public:
   using data_read_cb =
-      std::function<void(PseudoTerminal *pt, 
-                         const char *data, 
-                         size_t len)>;
+      std::function<void(PseudoTerminal *pt, const char *data, size_t len)>;
 
 private:
   data_read_cb _data_cb;
 
   int childfd;
-  int parentfd; 
+  int parentfd;
 
   std::vector<char> write_buffer;
   std::vector<char> read_buffer;
@@ -48,8 +46,8 @@ public:
   bool start();
   // begin communication
 
-  bool set_size(int rows, int cols); 
+  bool set_size(int rows, int cols);
 
   bool fork_child();
 };
-}
+} // namespace io

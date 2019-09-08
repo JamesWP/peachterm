@@ -1,7 +1,7 @@
 #include "io.hpp"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 using namespace io;
@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 
 void read_data_available(PseudoTerminal *pt, const char *data, size_t len) {
   pt->read_complete();
-  printf("Data available: %d bytes at %ld\n", (int)len, (long int) data);
+  printf("Data available: %d bytes at %ld\n", (int)len, (long int)data);
   pt->write(data, len);
 }
 

@@ -1,8 +1,8 @@
 #include "parser.hpp"
 
 #include <unicode/brkiter.h>
-#include <unicode/utext.h>
 #include <unicode/locid.h>
+#include <unicode/utext.h>
 
 namespace parser {
 
@@ -180,7 +180,6 @@ void VTParser::dispatch_csi(const char *data, size_t length) {
   std::cout << " : '";
   std::cout.write(data, length);
   std::cout << "'\n";
-
 
   on_csi(operation, args, options);
 }
