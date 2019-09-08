@@ -3,7 +3,6 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <algorithm>
-#include <cairo.h>
 #include <chrono>
 #include <iostream>
 #include <thread>

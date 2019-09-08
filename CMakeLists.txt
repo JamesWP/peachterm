@@ -4,7 +4,7 @@ project(jterm)
 enable_testing()
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf cairo)
+pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf)
 
 find_package(ICU COMPONENTS uc REQUIRED)
 
