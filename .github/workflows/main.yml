@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: install deps
-      run: apt-get install -y g++ gcc pkg-config libsdl2-dev libsdl2-ttf-dev libsdl2-ttf-dev libicu-dev libboost-dev libboost-system-dev libgtest-dev libgmock-dev
+      run: apt-get install -y g++ gcc pkg-config libsdl2-dev libsdl2-ttf-dev libsdl2-ttf-dev libicu-dev libboost-dev libboost-system-dev libgtest-dev libgmock-dev fonts-ubuntu
     - name: configure and build
       run: mkdir bld && cd bld && cmake -CMAKE_BUILD_TYPE=Release .. && cmake --build .
     
