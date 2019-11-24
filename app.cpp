@@ -161,8 +161,8 @@ void App::on_csi(char operation, const std::vector<int> &args,
   // clang-format off
         switch (operation) {
         case '@': window.insert_cells(row, col, arg(0, 1));    break;
-        case 'A': adjust_cursor(-1, 0);                        break;
-        case 'B': adjust_cursor(1, 0);                         break;
+        case 'A': adjust_cursor(-arg(0, 1), 0);                break;
+        case 'B': adjust_cursor(arg(0, 1), 0);                 break;
         case 'C': adjust_cursor(0, 1);                         break;
         case 'D': adjust_cursor(0, -1);                        break;
         case 'E': // -----------------------------------------------;
