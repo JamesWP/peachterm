@@ -39,8 +39,14 @@ void App::on_return() {
 }
 
 void App::adjust_cursor(int rows_n, int cols_n) {
-  curs_to_col(col + cols_n);
   curs_to_row(row + rows_n);
+  curs_to_col(col + cols_n);
+  window.move_cursor(row, col);
+}
+
+void App::set_cursor(int n_row, int n_col) {
+  curs_to_row(n_row);
+  curs_to_col(n_col);
   window.move_cursor(row, col);
 }
 
@@ -155,7 +161,7 @@ void App::csi_m(const std::vector<int> &args) {
 void App::on_csi(char operation, const std::vector<int> &args,
                  std::string_view /*options*/) {
   auto arg = [&](int arg, int def = 0) {
-    return ((int)args.size() - 1 > arg) ? args[arg] : def;
+    return ((int)args.size() > arg) ? args[arg] : def;
   };
 
   // clang-format off
@@ -163,15 +169,20 @@ void App::on_csi(char operation, const std::vector<int> &args,
         case '@': window.insert_cells(row, col, arg(0, 1));    break;
         case 'A': adjust_cursor(-arg(0, 1), 0);                break;
         case 'B': adjust_cursor(arg(0, 1), 0);                 break;
-        case 'C': adjust_cursor(0, 1);                         break;
-        case 'D': adjust_cursor(0, -1);                        break;
-        case 'E': // -----------------------------------------------;
-        case 'F':
-        case 'G':
-        case 'H':
-        case 'I':
+        case 'C': adjust_cursor(0, arg(0, 1));                 break;
+        case 'D': adjust_cursor(0, -arg(0, 1));                break;
+        case 'E': set_cursor(row + arg(0, 1), 0);              break;
+        case 'F': set_cursor(row - arg(0, 1), 0);              break;
+        case 'G': set_cursor(row, arg(0, 1)-1);                break;
+        case 'H': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
+        case 'I': // -----------------------------------------------;
         case 'J': break; // ----------------------------------------;
-        case 'K': perform_el(arg(0));                          break;
+        case 'K': perform_el(arg(1));                          break;
+        case 'L': // -----------------------------------------------;
+        case 'M': // -----------------------------------------------;
+        case 'N': // -----------------------------------------------;
+        case 'O': break; // ----------------------------------------;
+        case 'P': window.delete_cells(row, col, arg(0, 1));    break;
         case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
         }
   // clang-format on

@@ -131,6 +131,13 @@ void TermWin::insert_cells(int row, int col, int number, TermCell cell) {
   clear_cells(row, col, col + number, cell);
 }
 
+void TermWin::delete_cells(int row, int col, int number, TermCell cell) {
+  auto begin = cels.begin() + row * num_cols + col;
+  auto end = cels.begin() + (row + 1) * num_cols;
+  std::rotate(begin, begin + number, end);
+  clear_cells(row, num_cols - number, num_cols, cell);
+}
+
 void TermWin::dirty() {
   for (auto &c : cels) {
     c.dirty() = true;
