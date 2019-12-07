@@ -38,6 +38,17 @@ void App::on_return() {
   window.move_cursor(row, col);
 }
 
+int tab_stop(int start, int num_stops)
+{
+  return start + 8 * num_stops - (start & 7);
+}
+
+void App::on_tab() {
+  std::cout << "on_tab\n";
+  curs_to_col(tab_stop(col, 1));
+  window.move_cursor(row, col);
+}
+
 void App::adjust_cursor(int rows_n, int cols_n) {
   curs_to_row(row + rows_n);
   curs_to_col(col + cols_n);
@@ -61,6 +72,28 @@ void App::perform_el(int arg) {
   case 2: // Erase all.
     window.clear_cells(row, 0, cols);
     return;
+  }
+}
+
+void App::perform_ed(bool selective, int arg)
+{
+  if (selective) {
+    return;
+  }
+
+  switch (arg) {
+  case 0: // Erase below
+    window.clear_rows(row, rows);
+    break;
+  case 1: // Erase above
+    window.clear_rows(0, row);
+    break;
+  case 2: // Erase all
+    window.clear_rows(0, rows);
+    break;
+  case 3: // Erase saved lines
+  default:
+    break;
   }
 }
 
@@ -159,32 +192,38 @@ void App::csi_m(const std::vector<int> &args) {
 }
 
 void App::on_csi(char operation, const std::vector<int> &args,
-                 std::string_view /*options*/) {
+                 std::string_view options) {
   auto arg = [&](int arg, int def = 0) {
     return ((int)args.size() > arg) ? args[arg] : def;
   };
 
+  bool q = options.size() != 0 && options[0] == '?';
+
   // clang-format off
-        switch (operation) {
-        case '@': window.insert_cells(row, col, arg(0, 1));    break;
-        case 'A': adjust_cursor(-arg(0, 1), 0);                break;
-        case 'B': adjust_cursor(arg(0, 1), 0);                 break;
-        case 'C': adjust_cursor(0, arg(0, 1));                 break;
-        case 'D': adjust_cursor(0, -arg(0, 1));                break;
-        case 'E': set_cursor(row + arg(0, 1), 0);              break;
-        case 'F': set_cursor(row - arg(0, 1), 0);              break;
-        case 'G': set_cursor(row, arg(0, 1)-1);                break;
-        case 'H': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
-        case 'I': // -----------------------------------------------;
-        case 'J': break; // ----------------------------------------;
-        case 'K': perform_el(arg(1));                          break;
-        case 'L': // -----------------------------------------------;
-        case 'M': // -----------------------------------------------;
-        case 'N': // -----------------------------------------------;
-        case 'O': break; // ----------------------------------------;
-        case 'P': window.delete_cells(row, col, arg(0, 1));    break;
-        case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
-        }
+  switch (operation) {
+  case '@': window.insert_cells(row, col, arg(0, 1));    break;
+  case 'A': adjust_cursor(-arg(0, 1), 0);                break;
+  case 'B': adjust_cursor(arg(0, 1), 0);                 break;
+  case 'C': adjust_cursor(0, arg(0, 1));                 break;
+  case 'D': adjust_cursor(0, -arg(0, 1));                break;
+  case 'E': set_cursor(row + arg(0, 1), 0);              break;
+  case 'F': set_cursor(row - arg(0, 1), 0);              break;
+  case 'G': set_cursor(row, arg(0, 1)-1);                break;
+  case 'H': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
+  case 'I': curs_to_col(tab_stop(col, arg(0, 1)));       break;
+  case 'J': perform_ed(q, arg(0, 0));                    break;
+  case 'K': perform_el(arg(1));                          break;
+  case 'L': // -----------------------------------------------;
+  case 'M': // -----------------------------------------------;
+
+  case 'P': window.delete_cells(row, col, arg(0, 1));    break;
+  case 'S': // -----------------------------------------------;
+  case 'T': // -----------------------------------------------;
+
+  case 'X': // -----------------------------------------------;
+  case 'Z': // -----------------------------------------------;
+  case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
+  }
   // clang-format on
 
   window.move_cursor(row, col);

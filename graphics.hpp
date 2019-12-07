@@ -98,6 +98,7 @@ public:
   void set_cell(int row, int col, TermCell cell);
   void clear_cells(TermCell cell = {});
   void clear_cells(int row, int begin_col, int end_col, TermCell cell = {});
+  void clear_rows(int begin_row, int end_row, TermCell cell = {});
   void insert_cells(int row, int col, int number, TermCell cell = {});
   void delete_cells(int row, int col, int number, TermCell cell = {});
   void redraw();

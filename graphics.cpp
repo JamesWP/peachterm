@@ -124,6 +124,12 @@ void TermWin::clear_cells(int row, int begin_col, int end_col, TermCell cell) {
   }
 }
 
+void TermWin::clear_rows(int begin_row, int end_row, TermCell cell) {
+  for (int row = begin_row; row != end_row; row++) {
+    clear_cells(row, 0, num_cols, cell);
+  }
+}
+
 void TermWin::insert_cells(int row, int col, int number, TermCell cell) {
   auto begin = cels.begin() + row * num_cols + col;
   auto end = cels.begin() + (row + 1) * num_cols;

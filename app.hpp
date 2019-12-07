@@ -14,6 +14,7 @@ public:
   void on_backspace() override;
   void on_newline() override;
   void on_return() override;
+  void on_tab() override;
   void on_csi(char operation, const std::vector<int> &args,
               std::string_view /*options*/) override;
 
@@ -21,6 +22,7 @@ public:
   void adjust_cursor(int rows_n, int cols_n);
   void set_cursor(int n_rows, int n_cols);
   void perform_el(int arg);
+  void perform_ed(bool selective, int arg);
   void csi_m(const std::vector<int> &args);
 };
 
