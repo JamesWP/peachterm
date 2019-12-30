@@ -14,9 +14,12 @@ namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-#if 0
+#if 1
   window.redraw();
   SDL_Delay(10);
+#endif
+#if 1
+  printf("Data: '%s'\n", data);
 #endif
 }
 
@@ -191,6 +194,35 @@ void App::csi_m(const std::vector<int> &args) {
   }
 }
 
+void App::process_di() { pt_p->write("\e[65;1;9c"); }
+
+void App::process_reset(bool dec, const std::vector<int>& args) {
+  std::for_each(args.begin(), args.end(), [dec, this](int arg){
+    this->process_reset(dec, arg);
+  });
+}
+
+void App::process_reset(bool dec, int arg) {
+  if (!dec) {
+    switch(arg) {
+    case 2:
+      break;
+    case 4:
+      break;
+    case 12:
+      break;
+    case 20:
+      break;
+    }
+    return;
+  }
+  switch (arg) {
+    case 3:
+      resize(rows, 80);
+      break;
+  }
+}
+
 void App::on_csi(char operation, const std::vector<int> &args,
                  std::string_view options) {
   auto arg = [&](int arg, int def = 0) {
@@ -222,6 +254,9 @@ void App::on_csi(char operation, const std::vector<int> &args,
 
   case 'X': // -----------------------------------------------;
   case 'Z': // -----------------------------------------------;
+  case 'c': process_di();                                break;
+  case 'f': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
+  case 'l': process_reset(q, args);                      break;
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
   }
   // clang-format on
@@ -276,7 +311,7 @@ void run() {
 
   std::cout << "App run\n";
 
-  App term{rows, cols};
+  App term{rows, cols, &pt};
 
   SDL_Event e;
 

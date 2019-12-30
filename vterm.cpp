@@ -1,10 +1,16 @@
 #include "vterm.hpp"
 
 namespace app {
-VTerm::VTerm(int _rows, int _cols) : rows{_rows}, cols{_cols} {
-  window.resize_window(rows, cols);
+VTerm::VTerm(int _rows, int _cols) {
+  resize(_rows, _cols);
   cell.fg_col = 0xFFFFFFFF;
   cell.bg_col = 0x000000FF;
+}
+
+void VTerm::resize(int _rows, int _cols) {
+  rows = _rows;
+  cols = _cols;
+  window.resize_window(rows, cols);
 }
 
 void VTerm::overwriteglyph(const char *input, size_t len) {

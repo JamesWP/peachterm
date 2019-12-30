@@ -3,11 +3,14 @@
 #include "graphics.hpp"
 #include "parser.hpp"
 #include "vterm.hpp"
+#include "io.hpp"
 
 namespace app {
 class App : public parser::VTParser, public app::VTerm {
+  io::PseudoTerminal *pt_p;
+
 public:
-  App(int rows, int cols) : app::VTerm{rows, cols} {}
+  App(int rows, int cols, io::PseudoTerminal *pt) : app::VTerm{rows, cols}, pt_p(pt) {}
 
   // Implement parser::VTParser interface...
   void on_glyph(const char *data, size_t length) override;
@@ -24,6 +27,9 @@ public:
   void perform_el(int arg);
   void perform_ed(bool selective, int arg);
   void csi_m(const std::vector<int> &args);
+  void process_di();
+  void process_reset(bool dec, const std::vector<int> &args);
+  void process_reset(bool dec, int arg);
 };
 
 void run();

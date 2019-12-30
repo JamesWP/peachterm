@@ -7,9 +7,9 @@ echo clear screen
 echo clear screen
 echo clear screen
 echo clear screen
-sleep 1
+#sleep 1
 echo -e '\e[3A     above'
-sleep 1
+#sleep 1
 echo -e '\e[J'
 echo after erase below
 
@@ -39,4 +39,7 @@ echo
 #echo -e "\e[2;10H|  |"
 #echo -e "\e[3;10HIIII"
 
+echo -e '\e[c'
+sleep 1
+read
 
