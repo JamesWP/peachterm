@@ -14,7 +14,7 @@ namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-#if 1
+#if 0
   window.redraw();
   SDL_Delay(10);
 #endif

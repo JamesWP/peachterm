@@ -83,6 +83,8 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
     return "\n";
   case SDLK_BACKSPACE:
     return "\b";
+  case SDLK_LEFTBRACKET:
+    if(ctrl) return "\33";
   }
 
   if (auto i = lore.find(sym); i != lore.end()) {
