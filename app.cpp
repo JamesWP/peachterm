@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string.h>
 
+
 namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
@@ -18,7 +19,7 @@ void App::on_glyph(const char *data, size_t length) {
   window.redraw();
   SDL_Delay(10);
 #endif
-#if 1
+#if 0
   printf("Data: '%s'\n", data);
 #endif
 }
@@ -64,6 +65,11 @@ void App::set_cursor(int n_row, int n_col) {
   window.move_cursor(row, col);
 }
 
+void App::set_scroll_region(int start_row, int end_row) {
+  scroll_row_begin = start_row-1;
+  scroll_row_end = end_row-1;
+}
+
 void App::perform_el(int arg) {
   switch (arg) {
   case 0: // Erase to right.
@@ -86,7 +92,7 @@ void App::perform_ed(bool selective, int arg)
 
   switch (arg) {
   case 0: // Erase below
-    window.clear_rows(row, rows);
+    window.clear_rows(row+1, rows);
     break;
   case 1: // Erase above
     window.clear_rows(0, row);
@@ -258,6 +264,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'f': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
   case 'l': process_reset(q, args);                      break;
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
+  case 'r': set_scroll_region(arg(0,1), arg(1, rows));   break;
   }
   // clang-format on
 
@@ -365,6 +372,7 @@ void run() {
       }
       }
     }
+    SDL_Delay(16.60);
   }
 }
 } // namespace app

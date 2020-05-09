@@ -20,10 +20,10 @@ void VTerm::overwriteglyph(const char *input, size_t len) {
 
 void VTerm::start_new_row() {
   // If the next row has put us beyond the scroll region:
-  if (row == scroll_row_end) {
+  if (row == scroll_row_end + 1) {
     // scroll up and start the last line again.
-    window.scroll(scroll_row_begin, scroll_row_end, gfx::Direction::UP, 1);
-    row = scroll_row_end - 1;
+    window.scroll(scroll_row_begin, scroll_row_end+1, gfx::Direction::UP, 1);
+    row = scroll_row_end;
   }
 }
 

@@ -24,6 +24,7 @@ public:
   // Helper functions.
   void adjust_cursor(int rows_n, int cols_n);
   void set_cursor(int n_rows, int n_cols);
+  void set_scroll_region(int start_row, int end_row);
   void perform_el(int arg);
   void perform_ed(bool selective, int arg);
   void csi_m(const std::vector<int> &args);
