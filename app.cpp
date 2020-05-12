@@ -8,6 +8,7 @@
 #include <SDL.h>
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 #include <string.h>
 
 
@@ -15,13 +16,14 @@ namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-#if 0
-  window.redraw();
-  SDL_Delay(10);
-#endif
-#if 0
-  printf("Data: '%s'\n", data);
-#endif
+  if(getenv("SLOW")) {
+    window.redraw();
+    SDL_Delay(10);
+  }
+  if(getenv("WRITE")) {
+    std::string_view glyph{data, length};
+    std::cout << "Data: " << std::quoted(glyph) << "\n";
+  }
 }
 
 void App::on_backspace() {
@@ -65,6 +67,16 @@ void App::set_cursor(int n_row, int n_col) {
   window.move_cursor(row, col);
 }
 
+void App::on_ri() {
+  // if at top of window, scroll down
+  if(row == scroll_row_begin){
+    scroll_down();
+  } else {
+    adjust_cursor(-1, 0);
+  }
+}
+
+// TODO: move to vterm
 void App::set_scroll_region(int start_row, int end_row) {
   scroll_row_begin = start_row-1;
   scroll_row_end = end_row-1;
@@ -202,31 +214,44 @@ void App::csi_m(const std::vector<int> &args) {
 
 void App::process_di() { pt_p->write("\e[65;1;9c"); }
 
-void App::process_reset(bool dec, const std::vector<int>& args) {
-  std::for_each(args.begin(), args.end(), [dec, this](int arg){
-    this->process_reset(dec, arg);
-  });
-}
-
-void App::process_reset(bool dec, int arg) {
-  if (!dec) {
+void App::process_decrst(int arg, bool q) {
+  if(q) {
     switch(arg) {
-    case 2:
-      break;
-    case 4:
-      break;
-    case 12:
-      break;
-    case 20:
-      break;
-    }
-    return;
-  }
-  switch (arg) {
     case 3:
       resize(rows, 80);
       break;
+    case 47:
+    case 1047:
+    case 1049:
+      window.screen_mode_normal() = true;
+      printf("Normal screen buffer\n");
+      break;
+    }
+    if(arg == 1047) {
+      window.clear_screen();
+      printf("Clearing screen buffer\n");
+    }
   }
+  window.dirty();
+}
+
+void App::process_decset(int arg, bool q) {
+  if(q) {
+    switch(arg) {
+    case 47:
+    case 1047:
+    case 1049:
+      window.screen_mode_normal() = false;
+      printf("Alternate screen buffer\n");
+    }
+    if (arg == 1049) {
+      window.clear_screen();
+      printf("Clearing screen buffer\n");
+    }
+  } else {
+    
+  }
+  window.dirty();
 }
 
 void App::on_csi(char operation, const std::vector<int> &args,
@@ -250,19 +275,21 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'H': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
   case 'I': curs_to_col(tab_stop(col, arg(0, 1)));       break;
   case 'J': perform_ed(q, arg(0, 0));                    break;
-  case 'K': perform_el(arg(1));                          break;
-  case 'L': // -----------------------------------------------;
-  case 'M': // -----------------------------------------------;
+  case 'K': perform_el(arg(0));                          break;
+  case 'L': insert_lines(arg(0,1));                      break;
+  case 'M': delete_lines(arg(0,1));                      break;
 
   case 'P': window.delete_cells(row, col, arg(0, 1));    break;
-  case 'S': // -----------------------------------------------;
-  case 'T': // -----------------------------------------------;
+  case 'S': scroll_up(arg(0,1));                         break;
+  case 'T': scroll_down(arg(0,1));                       break;
 
   case 'X': // -----------------------------------------------;
   case 'Z': // -----------------------------------------------;
   case 'c': process_di();                                break;
   case 'f': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
-  case 'l': process_reset(q, args);                      break;
+  case 'h': process_decset(arg(0,0),q);                  break;
+  case 'l': process_decrst(arg(0,0),q);                  break;
+
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
   case 'r': set_scroll_region(arg(0,1), arg(1, rows));   break;
   }

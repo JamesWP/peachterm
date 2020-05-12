@@ -20,6 +20,7 @@ public:
   void on_tab() override;
   void on_csi(char operation, const std::vector<int> &args,
               std::string_view /*options*/) override;
+  void on_ri() override;
 
   // Helper functions.
   void adjust_cursor(int rows_n, int cols_n);
@@ -29,8 +30,8 @@ public:
   void perform_ed(bool selective, int arg);
   void csi_m(const std::vector<int> &args);
   void process_di();
-  void process_reset(bool dec, const std::vector<int> &args);
-  void process_reset(bool dec, int arg);
+  void process_decset(int arg, bool q);
+  void process_decrst(int arg, bool q);
 };
 
 void run();

@@ -93,6 +93,10 @@ void VTParser::parse_input(char c) {
     case '(':
       state = STATE::CHARSET;
       break;
+    case 'M':
+      on_ri();
+      state = STATE::NORMAL;
+      break;
     case '=':
     case '>':
     case '7':

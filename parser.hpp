@@ -28,18 +28,19 @@ public:
     (void)glyph;
     (void)length;
   }
-  virtual void on_newline(){};
-  virtual void on_return(){};
-  virtual void on_tab(){};
-  virtual void on_bell(){};
-  virtual void on_backspace(){};
-  virtual void on_charset(char c) { (void)c; };
+  virtual void on_newline(){}
+  virtual void on_return(){}
+  virtual void on_tab(){}
+  virtual void on_backspace(){}
+  virtual void on_bell(){}
+  virtual void on_charset(char c) { (void)c; }
   virtual void on_csi(char op, const std::vector<int> &args,
                       std::string_view options) {
     (void)op;
     (void)args;
     (void)options;
   }
+  virtual void on_ri(){}
 };
 
 } // namespace parser

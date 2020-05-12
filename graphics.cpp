@@ -34,7 +34,7 @@ TermWin::TermWin() {
 
   tex = nullptr;
 
-  int pointSize = 25;
+  int pointSize = 15;
 
   fontRegular = TTF_OpenFont(
       "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
@@ -82,7 +82,8 @@ void TermWin::resize_window(int rows, int cols) {
   const int tex_width = num_cols * cell_width;
   const int tex_height = num_rows * cell_height;
 
-  cels.resize(num_rows * num_cols);
+  normalScreen.resize(num_rows * num_cols);
+  alternativeScreen.resize(num_rows * num_cols);
 
   SDL_SetWindowSize(win, tex_width, tex_height);
 
@@ -107,7 +108,11 @@ void TermWin::set_cell(int row, int col, TermCell cell) {
 
   const size_t offset = row * num_cols + col;
 
-  cels[offset] = cell;
+  if(isNormalScreen) {
+    normalScreen[offset] = cell;
+  } else {
+    alternativeScreen[offset] = cell;
+  }
 }
 
 void TermWin::clear_cells(TermCell cell) {
@@ -131,6 +136,7 @@ void TermWin::clear_rows(int begin_row, int end_row, TermCell cell) {
 }
 
 void TermWin::insert_cells(int row, int col, int number, TermCell cell) {
+  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
   auto begin = cels.begin() + row * num_cols + col;
   auto end = cels.begin() + (row + 1) * num_cols;
   std::rotate(begin, end - number, end);
@@ -138,6 +144,7 @@ void TermWin::insert_cells(int row, int col, int number, TermCell cell) {
 }
 
 void TermWin::delete_cells(int row, int col, int number, TermCell cell) {
+  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
   auto begin = cels.begin() + row * num_cols + col;
   auto end = cels.begin() + (row + 1) * num_cols;
   std::rotate(begin, begin + number, end);
@@ -145,12 +152,14 @@ void TermWin::delete_cells(int row, int col, int number, TermCell cell) {
 }
 
 void TermWin::dirty() {
+  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
   for (auto &c : cels) {
     c.dirty() = true;
   }
 }
 
 void TermWin::redraw() {
+  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
   if (tex == nullptr)
     return;
 
@@ -167,7 +176,7 @@ void TermWin::redraw() {
 
       // Cell content.
       const char *glyph = cell.glyph.c_str();
-
+  
       // Cell color.
       SDL_Color fg, bg;
       fg.r = (cell.fg_col & 0xFF000000) >> 24;
@@ -214,6 +223,10 @@ void TermWin::redraw() {
       if (!dirty && !is_cursor)
         continue;
 
+      if (cell.reverse) {
+        std::swap(fg, bg);
+      }
+
       // Clear cursor.
       SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
       SDL_RenderFillRect(ren, &curs_rect);
@@ -253,6 +266,8 @@ void TermWin::move_cursor(int row, int col) {
 }
 
 void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
+  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
+
   std::cout << "Scrolling rows " << begin_row << " - " << end_row << " ";
   std::cout << (d == Direction::UP ? "UP" : "DOWN") << " by " << amount << "\n";
 
@@ -265,7 +280,6 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
 
   TermCell clear;
 
-  // TODO: clear
   if (d == Direction::UP) {
     // blank lines are at the end.
     // clear mid - end.

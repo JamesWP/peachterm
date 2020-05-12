@@ -27,6 +27,24 @@ void VTerm::start_new_row() {
   }
 }
 
+void VTerm::insert_lines(int num) {
+  scroll_down(num);
+}
+
+void VTerm::delete_lines(int num) {
+  scroll_up(num);
+}
+
+void VTerm::scroll_up(int num) {
+  // scroll [row, scroll_row_end] up num times
+  window.scroll(row, scroll_row_end+1, gfx::Direction::UP, num);
+}
+
+void VTerm::scroll_down(int num) {
+  // scroll [row, scroll_row_end] down num times
+  window.scroll(row, scroll_row_end+1, gfx::Direction::DOWN, num);
+}
+
 void VTerm::putglyph(const char *input, size_t len) {
 
   // If we are of the rightmost column, we start the next row.

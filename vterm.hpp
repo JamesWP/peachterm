@@ -61,8 +61,17 @@ public:
   void cell_set_bg(uint32_t);
   // Set the color of the cell
 
-  void scroll_up();
-  // Scroll the region up
+  void scroll_up(int num=1);
+  // Scroll the region up, num times
+
+  void scroll_down(int num=1);
+  // Scroll the region down, num times
+
+  void insert_lines(int num=1);
+  // Insert num lines. scrolls down
+
+  void delete_lines(int num=1);
+  // Delete num lines. scrolls up
 
   void start_new_row();
   // Called after row has been updated. may scroll the screen.

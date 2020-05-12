@@ -56,8 +56,12 @@ public:
   };
 
   friend inline bool operator==(const TermCell &l, const TermCell &r) {
-    return std::tie(l.fg_col, l.bg_col, l.bold, l.italic, l.glyph) ==
-           std::tie(r.fg_col, r.bg_col, r.bold, r.italic, r.glyph);
+    return std::tie(l.fg_col, l.bg_col, l.bold, l.italic, l.overline, 
+                    l.underline, l.dunderline, l.strike, l.feint, 
+                    l.reverse, l.glyph) ==
+           std::tie(r.fg_col, r.bg_col, r.bold, r.italic, l.overline, 
+                    r.underline, r.dunderline, r.strike, r.feint, 
+                    r.reverse, r.glyph);
   }
 
   friend inline bool operator!=(const TermCell &l, const TermCell &r) {
@@ -77,7 +81,10 @@ class TermWin {
   TTF_Font *fontBold;
   TTF_Font *fontBoldItalic;
 
-  std::vector<util::DirtyTracker<TermCell>> cels;
+  bool isNormalScreen = true;
+
+  std::vector<util::DirtyTracker<TermCell>> normalScreen;
+  std::vector<util::DirtyTracker<TermCell>> alternativeScreen;
 
   int num_rows;
   int num_cols;
@@ -99,12 +106,17 @@ public:
   void clear_cells(TermCell cell = {});
   void clear_cells(int row, int begin_col, int end_col, TermCell cell = {});
   void clear_rows(int begin_row, int end_row, TermCell cell = {});
+  void clear_screen();
   void insert_cells(int row, int col, int number, TermCell cell = {});
   void delete_cells(int row, int col, int number, TermCell cell = {});
   void redraw();
   void dirty();
   void move_cursor(int row, int col);
   void scroll(int begin_row, int end_row, Direction d, int amount);
+  bool& screen_mode_normal();
 };
+
+inline bool& TermWin::screen_mode_normal() { return isNormalScreen; }
+inline void TermWin::clear_screen() { clear_rows(0, num_rows); }
 
 } // namespace gfx
