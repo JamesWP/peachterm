@@ -22,9 +22,9 @@ public:
   gfx::TermCell cell;
   gfx::TermCell reset;
 
-  VTerm(int rows, int cols);
+  VTerm(int rows, int cols, int pointSize = 14);
 
-  void resize(int rows, int cols);
+  void resize(int rows, int cols, int pointSize = 14);
 
   void overwriteglyph(const char *input, size_t len);
   void putglyph(const char *input, size_t len);

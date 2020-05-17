@@ -72,14 +72,14 @@ public:
 enum class Direction { UP, DOWN };
 
 class TermWin {
-  SDL_Window *win;
-  SDL_Renderer *ren;
-  SDL_Texture *tex;
+  SDL_Window *win = nullptr;
+  SDL_Renderer *ren = nullptr;
+  SDL_Texture *tex = nullptr;
 
-  TTF_Font *fontRegular;
-  TTF_Font *fontRegularItalic;
-  TTF_Font *fontBold;
-  TTF_Font *fontBoldItalic;
+  TTF_Font *fontRegular = nullptr;
+  TTF_Font *fontRegularItalic = nullptr;
+  TTF_Font *fontBold = nullptr;
+  TTF_Font *fontBoldItalic = nullptr;
 
   bool isNormalScreen = true;
 
@@ -95,12 +95,13 @@ class TermWin {
   int curs_col = 0;
 
 public:
-  TermWin();
+  TermWin(int rows, int cols, int pointSize);
   ~TermWin();
 
   TermWin(const TermWin &) = delete;
   TermWin &operator=(const TermWin &) = delete;
 
+  void load_fonts(int pointSize);
   void resize_window(int rows, int cols);
   void set_cell(int row, int col, TermCell cell);
   void clear_cells(TermCell cell = {});

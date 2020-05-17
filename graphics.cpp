@@ -24,9 +24,15 @@ context::~context() {
   SDL_Quit();
 }
 
-TermWin::TermWin() {
+TermWin::TermWin(int rows = 24, int cols = 80, int pointSize = 10) {
+  this->load_fonts(pointSize);
+
+  const int window_width = cols * cell_width;
+  const int window_height = rows * cell_height;
+
   win = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED,
-                         SDL_WINDOWPOS_UNDEFINED, 640, 480, 0);
+                         SDL_WINDOWPOS_UNDEFINED, window_width, window_height, 
+                         0);
 
   SDL_SetWindowInputFocus(win);
 
@@ -34,27 +40,7 @@ TermWin::TermWin() {
 
   tex = nullptr;
 
-  int pointSize = 15;
-
-  fontRegular = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
-
-  fontRegularItalic = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-RI.ttf", pointSize);
-
-  fontBold = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf",
-                          pointSize);
-
-  fontBoldItalic = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
-
-  int advance;
-  TTF_GlyphMetrics(fontRegular, 'M', nullptr, nullptr, nullptr, nullptr,
-                   &advance);
-
-  font_height = TTF_FontLineSkip(fontRegular);
-  cell_height = font_height + 1;
-  cell_width = advance;
+  this->resize_window(rows, cols);
 }
 
 TermWin::~TermWin() {
@@ -68,6 +54,49 @@ TermWin::~TermWin() {
   SDL_DestroyRenderer(ren);
   std::cout << "Window destroyed\n";
   SDL_DestroyWindow(win);
+}
+
+void TermWin::load_fonts(int pointSize) {
+  if(fontRegular!=0) {
+    TTF_CloseFont(fontRegular);
+  }
+  //fontRegular = TTF_OpenFont(
+  //    "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
+  fontRegular = TTF_OpenFont(
+        "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", pointSize);
+
+  if(fontRegularItalic!=0) {
+    TTF_CloseFont(fontRegularItalic);
+  }
+  fontRegularItalic = TTF_OpenFont(
+      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-RI.ttf", pointSize);
+
+  if(fontBold!=0) {
+    TTF_CloseFont(fontBold);
+  }
+  fontBold = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf",
+                          pointSize);
+
+  if(fontBoldItalic!=0) {
+    TTF_CloseFont(fontBoldItalic);
+  }
+  fontBoldItalic = TTF_OpenFont(
+      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
+
+  std::cout << fontRegular << fontRegularItalic << fontBold << fontBoldItalic 
+            << std::endl;
+
+  int advance;
+  TTF_GlyphMetrics(fontRegular, '&', nullptr, nullptr, nullptr, nullptr,
+                   &advance);
+
+  font_height = TTF_FontHeight(fontRegular);
+
+  if (font_height>30) { font_height = 30; }
+  if(advance>15) {advance = 15; } 
+
+  cell_height = font_height;
+  cell_width = advance;
 }
 
 void TermWin::resize_window(int rows, int cols) {
@@ -85,6 +114,8 @@ void TermWin::resize_window(int rows, int cols) {
   normalScreen.resize(num_rows * num_cols);
   alternativeScreen.resize(num_rows * num_cols);
 
+  //TODO: check if already this size
+  std::cout << "width:" << tex_width << " height:" << tex_height << std::endl;
   SDL_SetWindowSize(win, tex_width, tex_height);
 
   tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888,
@@ -232,8 +263,10 @@ void TermWin::redraw() {
       SDL_RenderFillRect(ren, &curs_rect);
 
       // Begin draw character.
-      SDL_Surface *cellSurf = TTF_RenderUTF8_Shaded(font, glyph, fg, bg);
+      SDL_Surface *cellSurf = TTF_RenderUTF8_Blended(font, glyph, fg);
       SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
+      SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
+      SDL_RenderFillRect(ren, &cell_rect);
       SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
       SDL_DestroyTexture(cellTex);
       SDL_FreeSurface(cellSurf);

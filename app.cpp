@@ -285,13 +285,16 @@ void App::on_csi(char operation, const std::vector<int> &args,
 
   case 'X': // -----------------------------------------------;
   case 'Z': // -----------------------------------------------;
+
   case 'c': process_di();                                break;
   case 'f': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
   case 'h': process_decset(arg(0,0),q);                  break;
   case 'l': process_decrst(arg(0,0),q);                  break;
-
+  case 'n': /* see eduterm */                            break;
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
   case 'r': set_scroll_region(arg(0,1), arg(1, rows));   break;
+  case 's': /* see eduterm */                            break;
+  case 't': /* see eduterm */                            break;
   }
   // clang-format on
 
@@ -325,6 +328,7 @@ void run() {
 
   int rows = 24;
   int cols = 80;
+  int pointSize = 12;
 
   std::string pending_input;
 
@@ -345,7 +349,7 @@ void run() {
 
   std::cout << "App run\n";
 
-  App term{rows, cols, &pt};
+  App term{rows, cols, pointSize, &pt};
 
   SDL_Event e;
 
