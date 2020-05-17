@@ -60,10 +60,10 @@ void TermWin::load_fonts(int pointSize) {
   if(fontRegular!=0) {
     TTF_CloseFont(fontRegular);
   }
-  //fontRegular = TTF_OpenFont(
-  //    "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
   fontRegular = TTF_OpenFont(
-        "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", pointSize);
+      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
+  //fontRegular = TTF_OpenFont(
+  //      "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", pointSize);
 
   if(fontRegularItalic!=0) {
     TTF_CloseFont(fontRegularItalic);
@@ -92,8 +92,8 @@ void TermWin::load_fonts(int pointSize) {
 
   font_height = TTF_FontHeight(fontRegular);
 
-  if (font_height>30) { font_height = 30; }
-  if(advance>15) {advance = 15; } 
+  // if (font_height>30) { font_height = 30; }
+  // if(advance>15) {advance = 15; } 
 
   cell_height = font_height;
   cell_width = advance;
