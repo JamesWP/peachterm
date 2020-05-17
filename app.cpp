@@ -7,16 +7,15 @@
 
 #include <SDL.h>
 #include <chrono>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <string.h>
-
 
 namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-  if(getenv("SLOW")) {
+  if (getenv("SLOW")) {
     window.redraw();
     SDL_Delay(10);
   }
@@ -254,6 +253,17 @@ void App::process_decset(int arg, bool q) {
   window.dirty();
 }
 
+void App::process_status_report(int arg){
+  std::ostringstream command_buffer;
+  if (arg == 6) {
+    command_buffer << "\33[" << col + 1 << ";" << row + 1 << "R";
+
+  } else if (arg == 5) {
+    command_buffer << "\33[0n";
+  }
+  pt_p->write(command_buffer.str());
+}
+
 void App::on_csi(char operation, const std::vector<int> &args,
                  std::string_view options) {
   auto arg = [&](int arg, int def = 0) {
@@ -290,7 +300,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'f': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
   case 'h': process_decset(arg(0,0),q);                  break;
   case 'l': process_decrst(arg(0,0),q);                  break;
-  case 'n': /* see eduterm */                            break;
+  case 'n': process_status_report(arg(0));               break;
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
   case 'r': set_scroll_region(arg(0,1), arg(1, rows));   break;
   case 's': /* see eduterm */                            break;

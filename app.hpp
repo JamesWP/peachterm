@@ -32,6 +32,7 @@ public:
   void process_di();
   void process_decset(int arg, bool q);
   void process_decrst(int arg, bool q);
+  void process_status_report(int arg);
 };
 
 void run();
