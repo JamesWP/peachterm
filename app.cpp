@@ -253,11 +253,10 @@ void App::process_decset(int arg, bool q) {
   window.dirty();
 }
 
-void App::process_status_report(int arg){
+void App::process_status_report(int arg) {
   std::ostringstream command_buffer;
   if (arg == 6) {
     command_buffer << "\33[" << col + 1 << ";" << row + 1 << "R";
-
   } else if (arg == 5) {
     command_buffer << "\33[0n";
   }
@@ -266,8 +265,12 @@ void App::process_status_report(int arg){
 
 void App::on_csi(char operation, const std::vector<int> &args,
                  std::string_view options) {
-  auto arg = [&](int arg, int def = 0) {
-    return ((int)args.size() > arg) ? args[arg] : def;
+  auto arg = [&](int a, int def = 0) {
+    return ((int)args.size() > a) ? args[a] : def;
+  };
+  // Get arg but replace 0's with 1's
+  auto ag1 = [&](int a, int def = 0) {
+    return arg(a, def) == 0? 1: arg(a, def);
   };
 
   bool q = options.size() != 0 && options[0] == '?';
@@ -275,23 +278,23 @@ void App::on_csi(char operation, const std::vector<int> &args,
   // clang-format off
   switch (operation) {
   case '@': window.insert_cells(row, col, arg(0, 1));    break;
-  case 'A': adjust_cursor(-arg(0, 1), 0);                break;
-  case 'B': adjust_cursor(arg(0, 1), 0);                 break;
-  case 'C': adjust_cursor(0, arg(0, 1));                 break;
-  case 'D': adjust_cursor(0, -arg(0, 1));                break;
-  case 'E': set_cursor(row + arg(0, 1), 0);              break;
-  case 'F': set_cursor(row - arg(0, 1), 0);              break;
-  case 'G': set_cursor(row, arg(0, 1)-1);                break;
-  case 'H': set_cursor(arg(0, 1)-1, arg(1, 1)-1);        break;
-  case 'I': curs_to_col(tab_stop(col, arg(0, 1)));       break;
+  case 'A': adjust_cursor(-ag1(0, 1), 0);                break;
+  case 'B': adjust_cursor(ag1(0, 1), 0);                 break;
+  case 'C': adjust_cursor(0, ag1(0, 1));                 break;
+  case 'D': adjust_cursor(0, -ag1(0, 1));                break;
+  case 'E': set_cursor(row + ag1(0, 1), 0);              break;
+  case 'F': set_cursor(row - ag1(0, 1), 0);              break;
+  case 'G': set_cursor(row, ag1(0, 1)-1);                break;
+  case 'H': set_cursor(ag1(0, 1)-1, ag1(1, 1)-1);        break;
+  case 'I': curs_to_col(tab_stop(col, ag1(0, 1)-1));       break;
   case 'J': perform_ed(q, arg(0, 0));                    break;
-  case 'K': perform_el(arg(0));                          break;
-  case 'L': insert_lines(arg(0,1));                      break;
-  case 'M': delete_lines(arg(0,1));                      break;
+  case 'K': perform_el(ag1(0));                          break;
+  case 'L': insert_lines(ag1(0,1));                      break;
+  case 'M': delete_lines(ag1(0,1));                      break;
 
-  case 'P': window.delete_cells(row, col, arg(0, 1));    break;
-  case 'S': scroll_up(arg(0,1));                         break;
-  case 'T': scroll_down(arg(0,1));                       break;
+  case 'P': window.delete_cells(row, col, ag1(0, 1));    break;
+  case 'S': scroll_up(ag1(0,1));                         break;
+  case 'T': scroll_down(ag1(0,1));                       break;
 
   case 'X': // -----------------------------------------------;
   case 'Z': // -----------------------------------------------;
@@ -302,13 +305,19 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'l': process_decrst(arg(0,0),q);                  break;
   case 'n': process_status_report(arg(0));               break;
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
-  case 'r': set_scroll_region(arg(0,1), arg(1, rows));   break;
-  case 's': /* see eduterm */                            break;
-  case 't': /* see eduterm */                            break;
+  case 'r': set_scroll_region(ag1(0,1), ag1(1, rows));   break;
+  case 's': process_decset(arg(0,0),q);                  break;
   }
   // clang-format on
 
   window.move_cursor(row, col);
+}
+
+void App::on_esc(char op) {
+  switch (op) {
+    case 'D': on_return(); on_newline(); break;
+    case 'E': on_return(); break;
+  }
 }
 
 size_t strnlen_s(const char *s, size_t len) {
@@ -408,6 +417,19 @@ void run() {
         std::cout << "Clean redraw\n";
         term.window.dirty();
         term.window.redraw();
+      } break;
+      case SDL_WINDOWEVENT: {
+        switch (e.window.event) {
+        case SDL_WINDOWEVENT_RESIZED: {
+          int width = e.window.data1;
+          int height = e.window.data2;
+          // TODO: resize
+          std::cout << "Window resized: " << width << "x" << height
+                    << std::endl;
+          term.window.dirty();
+          term.window.redraw();
+        } break;
+        }
       } break;
       default: {
       }

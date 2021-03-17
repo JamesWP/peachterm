@@ -22,6 +22,7 @@ public:
 
   void dispatch_osi(const char *input, size_t length);
   void dispatch_csi(const char *input, size_t length);
+  void dispatch_esc(char op);
 
 public:
   virtual void on_glyph(const char *glyph, size_t length) {
@@ -41,6 +42,7 @@ public:
     (void)options;
   }
   virtual void on_ri(){}
+  virtual void on_esc(char op){ (void)op; }
 };
 
 } // namespace parser

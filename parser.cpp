@@ -101,6 +101,7 @@ void VTParser::parse_input(char c) {
     case '>':
     case '7':
     default:
+      dispatch_esc(c);
       state = STATE::NORMAL;
     }
     break;
@@ -188,7 +189,9 @@ void VTParser::dispatch_csi(const char *data, size_t length) {
   on_csi(operation, args, options);
 }
 
-void on_csi(char /*op*/, const std::vector<int> & /*args*/,
-            std::string_view /*options*/) {}
+void VTParser::dispatch_esc(char op) {
+  std::cout << "ESC: \"" << op << "\"\n";
 
+  on_esc(op);
+}
 } // namespace parser

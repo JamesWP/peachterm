@@ -32,7 +32,7 @@ TermWin::TermWin(int rows = 24, int cols = 80, int pointSize = 10) {
 
   win = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED,
                          SDL_WINDOWPOS_UNDEFINED, window_width, window_height, 
-                         0);
+                         SDL_WINDOW_RESIZABLE);
 
   SDL_SetWindowInputFocus(win);
 

@@ -21,6 +21,7 @@ public:
   void on_csi(char operation, const std::vector<int> &args,
               std::string_view /*options*/) override;
   void on_ri() override;
+  void on_esc(char op) override;
 
   // Helper functions.
   void adjust_cursor(int rows_n, int cols_n);

@@ -70,8 +70,8 @@ void clamp(int &v, int min, int max) {
 }
 
 void curs_clamp(int &row, int &col, int rows, int cols) {
-  clamp(row, 0, rows);
-  clamp(col, 0, cols);
+  clamp(row, 0, rows-1);
+  clamp(col, 0, cols-1);
 }
 
 void VTerm::curs_newline() {
