@@ -111,6 +111,8 @@ bool PseudoTerminal::fork_child() {
     dup2(childfd, 2);
     close(childfd);
 
+    ::setenv("TERM", "xterm-256color", 1);
+
     execlp("/usr/bin/bash", "-/usr/bin/bash", nullptr);
     return false;
   } else if (p > 0) {
