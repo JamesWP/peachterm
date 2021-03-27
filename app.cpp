@@ -118,9 +118,10 @@ void App::perform_ed(bool selective, int arg)
 }
 
 void App::csi_m(const std::vector<int> &args) {
+  // return;
   using A = gfx::TermCell::Attr;
 
-  auto extended_color = [&](auto &i) {
+  auto extended_color = [&](auto& col, auto &i) {
     if (++i == args.end())
       return;
 
@@ -200,7 +201,7 @@ void App::csi_m(const std::vector<int> &args) {
           case 38: case 48:
             // Set  color
             // Next arguments are 5;n or 2;r;g;b
-            extended_color(i);
+            extended_color(col, i);
             break;
           case 39: case 49:
             // Reset color.
@@ -288,7 +289,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'H': set_cursor(ag1(0, 1)-1, ag1(1, 1)-1);        break;
   case 'I': curs_to_col(tab_stop(col, ag1(0, 1)-1));       break;
   case 'J': perform_ed(q, arg(0, 0));                    break;
-  case 'K': perform_el(ag1(0));                          break;
+  case 'K': perform_el(arg(0));                          break;
   case 'L': insert_lines(ag1(0,1));                      break;
   case 'M': delete_lines(ag1(0,1));                      break;
 
@@ -315,8 +316,8 @@ void App::on_csi(char operation, const std::vector<int> &args,
 
 void App::on_esc(char op) {
   switch (op) {
-    case 'D': on_return(); on_newline(); break;
-    case 'E': on_return(); break;
+    case 'D': on_newline(); break;
+    case 'E': on_newline(); on_return(); break;
   }
 }
 

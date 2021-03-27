@@ -76,7 +76,7 @@ void curs_clamp(int &row, int &col, int rows, int cols) {
 
 void VTerm::curs_newline() {
   row++;
-  col = 0;
+  //col = 0;
 
   start_new_row();
 
