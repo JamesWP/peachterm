@@ -9,9 +9,13 @@ VTerm::VTerm(int _rows, int _cols, int pointSize)
 }
 
 void VTerm::resize(int _rows, int _cols, int pointSize) {
+  window.load_fonts(pointSize);
+  resize(_rows, _cols);
+}
+
+void VTerm::resize(int _rows, int _cols) {
   rows = _rows;
   cols = _cols;
-  window.load_fonts(pointSize);
   window.resize_window(rows, cols);
 }
 

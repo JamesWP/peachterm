@@ -91,6 +91,7 @@ class TermWin {
   int cell_width = 6;
   int cell_height = 12;
   int font_height = 12;
+  int font_point = 14;
   int curs_row = 0;
   int curs_col = 0;
 
@@ -115,6 +116,7 @@ public:
   void move_cursor(int row, int col);
   void scroll(int begin_row, int end_row, Direction d, int amount);
   bool& screen_mode_normal();
+  std::pair<int, int> cell_size() const;
 };
 
 inline bool& TermWin::screen_mode_normal() { return isNormalScreen; }

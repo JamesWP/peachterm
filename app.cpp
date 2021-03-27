@@ -19,7 +19,7 @@ void App::on_glyph(const char *data, size_t length) {
     window.redraw();
     SDL_Delay(10);
   }
-  if(getenv("WRITE")) {
+  if (getenv("WRITE")) {
     std::string_view glyph{data, length};
     std::cout << "Data: " << std::quoted(glyph) << "\n";
   }
@@ -43,8 +43,7 @@ void App::on_return() {
   window.move_cursor(row, col);
 }
 
-int tab_stop(int start, int num_stops)
-{
+int tab_stop(int start, int num_stops) {
   return start + 8 * num_stops - (start & 7);
 }
 
@@ -68,7 +67,7 @@ void App::set_cursor(int n_row, int n_col) {
 
 void App::on_ri() {
   // if at top of window, scroll down
-  if(row == scroll_row_begin){
+  if (row == scroll_row_begin) {
     scroll_down();
   } else {
     adjust_cursor(-1, 0);
@@ -77,8 +76,8 @@ void App::on_ri() {
 
 // TODO: move to vterm
 void App::set_scroll_region(int start_row, int end_row) {
-  scroll_row_begin = start_row-1;
-  scroll_row_end = end_row-1;
+  scroll_row_begin = start_row - 1;
+  scroll_row_end = end_row - 1;
 }
 
 void App::perform_el(int arg) {
@@ -95,15 +94,14 @@ void App::perform_el(int arg) {
   }
 }
 
-void App::perform_ed(bool selective, int arg)
-{
+void App::perform_ed(bool selective, int arg) {
   if (selective) {
     return;
   }
 
   switch (arg) {
   case 0: // Erase below
-    window.clear_rows(row+1, rows);
+    window.clear_rows(row + 1, rows);
     break;
   case 1: // Erase above
     window.clear_rows(0, row);
@@ -121,7 +119,7 @@ void App::csi_m(const std::vector<int> &args) {
   // return;
   using A = gfx::TermCell::Attr;
 
-  auto extended_color = [&](auto& col, auto &i) {
+  auto extended_color = [&](auto &col, auto &i) {
     if (++i == args.end())
       return;
 
@@ -215,8 +213,8 @@ void App::csi_m(const std::vector<int> &args) {
 void App::process_di() { pt_p->write("\e[65;1;9c"); }
 
 void App::process_decrst(int arg, bool q) {
-  if(q) {
-    switch(arg) {
+  if (q) {
+    switch (arg) {
     case 3:
       resize(rows, 80);
       break;
@@ -227,7 +225,7 @@ void App::process_decrst(int arg, bool q) {
       printf("Normal screen buffer\n");
       break;
     }
-    if(arg == 1047) {
+    if (arg == 1047) {
       window.clear_screen();
       printf("Clearing screen buffer\n");
     }
@@ -236,8 +234,8 @@ void App::process_decrst(int arg, bool q) {
 }
 
 void App::process_decset(int arg, bool q) {
-  if(q) {
-    switch(arg) {
+  if (q) {
+    switch (arg) {
     case 47:
     case 1047:
     case 1049:
@@ -249,7 +247,6 @@ void App::process_decset(int arg, bool q) {
       printf("Clearing screen buffer\n");
     }
   } else {
-    
   }
   window.dirty();
 }
@@ -271,7 +268,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   };
   // Get arg but replace 0's with 1's
   auto ag1 = [&](int a, int def = 0) {
-    return arg(a, def) == 0? 1: arg(a, def);
+    return arg(a, def) == 0 ? 1 : arg(a, def);
   };
 
   bool q = options.size() != 0 && options[0] == '?';
@@ -316,8 +313,13 @@ void App::on_csi(char operation, const std::vector<int> &args,
 
 void App::on_esc(char op) {
   switch (op) {
-    case 'D': on_newline(); break;
-    case 'E': on_newline(); on_return(); break;
+  case 'D':
+    on_newline();
+    break;
+  case 'E':
+    on_newline();
+    on_return();
+    break;
   }
 }
 
@@ -421,14 +423,28 @@ void run() {
       } break;
       case SDL_WINDOWEVENT: {
         switch (e.window.event) {
-        case SDL_WINDOWEVENT_RESIZED: {
+        case SDL_WINDOWEVENT_SIZE_CHANGED: {
           int width = e.window.data1;
           int height = e.window.data2;
-          // TODO: resize
+          
           std::cout << "Window resized: " << width << "x" << height
                     << std::endl;
           term.window.dirty();
           term.window.redraw();
+
+        } break;
+        case SDL_WINDOWEVENT_RESIZED: {
+          int width = e.window.data1;
+          int height = e.window.data2;
+
+          auto cell_size = term.window.cell_size();
+          int new_cols = width / cell_size.first;
+          int new_rows = height / cell_size.second;
+
+          if (abs(new_rows - rows) + abs(new_cols - cols) > 5) {
+            term.resize(new_rows, new_cols);
+            pt.set_size(new_rows, new_cols);
+          }
         } break;
         }
       } break;
@@ -436,7 +452,7 @@ void run() {
       }
       }
     }
-    SDL_Delay(16.60);
+    SDL_Delay(10);
   }
 }
 } // namespace app

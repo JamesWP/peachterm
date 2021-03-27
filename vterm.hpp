@@ -24,7 +24,8 @@ public:
 
   VTerm(int rows, int cols, int pointSize = 14);
 
-  void resize(int rows, int cols, int pointSize = 14);
+  void resize(int rows, int cols, int pointSize);
+  void resize(int rows, int cols);
 
   void overwriteglyph(const char *input, size_t len);
   void putglyph(const char *input, size_t len);

@@ -97,6 +97,7 @@ void TermWin::load_fonts(int pointSize) {
 
   cell_height = font_height;
   cell_width = advance;
+  font_point = pointSize;
 }
 
 void TermWin::resize_window(int rows, int cols) {
@@ -328,6 +329,10 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
       *b = clear;
     }
   }
+}
+
+std::pair<int, int> TermWin::cell_size() const {
+  return {cell_width, cell_height};
 }
 
 } // namespace gfx

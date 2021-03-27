@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb) Launch Slow",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/build/main",
@@ -14,6 +14,27 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [{"name":"SLOW","value":"yes"},{"name":"WRITE", "value":"yes"}],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing -x 'run > output'",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/main",
+
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
