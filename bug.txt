@@ -1,4 +1,0 @@
-[16;1H[K[7m Manual page vim(1) line 4 (press h for help or q to quit)[27m[K[K [KESCESC[KOO[KAA[K[HM[1mNAME[0m[m
-[16;1H[K[7m Manual page vim(1) line 3 (press h for help or q to quit)[27m[K[K [KESCESC[KOO[KAA[K[HM[m
-[16;1H[K[7m Manual page vim(1) line 2 (press h for help or q to quit)[27m[K[K [KESCESC[KOO[KAA[K[HMVIM(1)                      General Commands Manual                     VIM(1)[m
-[16;1H[K[7m Manual page vim(1) line 1 (press h for help or q to quit)[27m[K[K [KESCESC[KOO[KAA[K[K[7m Manual page vim(1) line 1 (press h for help or q to quit)[27m[K[K[?1l>[?1049l[23;0;0t
