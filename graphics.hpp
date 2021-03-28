@@ -103,7 +103,10 @@ public:
   TermWin &operator=(const TermWin &) = delete;
 
   void load_fonts(int pointSize);
-  void resize_window(int rows, int cols);
+  // resize grid
+  void resize_term(int rows, int cols);
+  // resize window
+  void auto_resize_window();
   void set_cell(int row, int col, TermCell cell);
   void clear_cells(TermCell cell = {});
   void clear_cells(int row, int begin_col, int end_col, TermCell cell = {});
@@ -117,6 +120,7 @@ public:
   void scroll(int begin_row, int end_row, Direction d, int amount);
   bool& screen_mode_normal();
   std::pair<int, int> cell_size() const;
+  void set_window_title(std::string_view);
 };
 
 inline bool& TermWin::screen_mode_normal() { return isNormalScreen; }

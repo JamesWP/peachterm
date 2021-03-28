@@ -113,7 +113,6 @@ void VTParser::parse_input(char c) {
     }
     break;
   case STATE::OSI:
-    command.push_back(c);
 
     if (is_final_osi(c)) {
       dispatch_osi(command.data(), command.size());
@@ -125,6 +124,8 @@ void VTParser::parse_input(char c) {
       state = STATE::NORMAL;
     }
 
+    command.push_back(c);
+    
     break;
   case STATE::CHARSET:
     state = STATE::NORMAL;
@@ -141,6 +142,22 @@ void VTParser::dispatch_osi(const char *data, size_t length) {
   std::cout << "OSI: '";
   std::cout.write(data, length);
   std::cout << "'\n";
+
+  std::string_view operation = {data, length};
+
+  auto pos = operation.find_first_of(";");
+
+  if(pos == std::string_view::npos) {
+    // ignore
+    return;
+  }
+
+  std::string op_num = {operation.data(), operation.data() + pos};
+
+  int op_num_int = std::stoi(op_num);
+  operation = {operation.data() + pos + 1, operation.size() - (pos + 1)};
+
+  on_osi(op_num_int, operation);
 }
 
 void VTParser::dispatch_csi(const char *data, size_t length) {

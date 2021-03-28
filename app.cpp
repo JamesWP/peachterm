@@ -261,6 +261,14 @@ void App::process_status_report(int arg) {
   pt_p->write(command_buffer.str());
 }
 
+void App::on_osi(int op, std::string_view data) {
+  switch(op) {
+    case 0: {
+      window.set_window_title(data);
+    } break;
+  }
+}
+
 void App::on_csi(char operation, const std::vector<int> &args,
                  std::string_view options) {
   auto arg = [&](int a, int def = 0) {
@@ -441,7 +449,7 @@ void run() {
           int new_cols = width / cell_size.first;
           int new_rows = height / cell_size.second;
 
-          if (abs(new_rows - rows) + abs(new_cols - cols) > 5) {
+          if (abs(new_rows - rows) + abs(new_cols - cols) > 1) {
             term.resize(new_rows, new_cols);
             pt.set_size(new_rows, new_cols);
           }

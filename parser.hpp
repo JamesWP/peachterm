@@ -43,6 +43,7 @@ public:
   }
   virtual void on_ri(){}
   virtual void on_esc(char op){ (void)op; }
+  virtual void on_osi(int, std::string_view) = 0;
 };
 
 } // namespace parser

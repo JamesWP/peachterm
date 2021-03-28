@@ -40,7 +40,7 @@ TermWin::TermWin(int rows = 24, int cols = 80, int pointSize = 10) {
 
   tex = nullptr;
 
-  this->resize_window(rows, cols);
+  this->resize_term(rows, cols);
 }
 
 TermWin::~TermWin() {
@@ -100,7 +100,7 @@ void TermWin::load_fonts(int pointSize) {
   font_point = pointSize;
 }
 
-void TermWin::resize_window(int rows, int cols) {
+void TermWin::resize_term(int rows, int cols) {
   if (tex != nullptr) {
     SDL_DestroyTexture(tex);
     std::cout << "Texture destroyed\n";
@@ -115,10 +115,6 @@ void TermWin::resize_window(int rows, int cols) {
   normalScreen.resize(num_rows * num_cols);
   alternativeScreen.resize(num_rows * num_cols);
 
-  //TODO: check if already this size
-  std::cout << "width:" << tex_width << " height:" << tex_height << std::endl;
-  SDL_SetWindowSize(win, tex_width, tex_height);
-
   tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888,
                           SDL_TEXTUREACCESS_TARGET, tex_width, tex_height);
 
@@ -128,6 +124,24 @@ void TermWin::resize_window(int rows, int cols) {
   clear_cells();
 
   redraw();
+}
+
+void TermWin::auto_resize_window() {
+  SDL_Rect texture_rect;
+  texture_rect.x = texture_rect.y = 0;
+  SDL_QueryTexture(tex, nullptr, nullptr, &texture_rect.w, &texture_rect.h);
+
+  SDL_Rect window_rect;
+  window_rect.x = window_rect.y = 0;
+  SDL_GetWindowSize(win, &window_rect.w, &window_rect.h);
+
+  // check if already this size
+  if(window_rect.w == texture_rect.w && window_rect.h == texture_rect.h) {
+    return;
+  }
+
+  std::cout << "width:" << texture_rect.w << " height:" << texture_rect.h << std::endl;
+  SDL_SetWindowSize(win, texture_rect.w, texture_rect.h);
 }
 
 void TermWin::set_cell(int row, int col, TermCell cell) {
@@ -287,9 +301,13 @@ void TermWin::redraw() {
   screen_rect.x = screen_rect.y = 0;
   SDL_GetWindowSize(win, &screen_rect.w, &screen_rect.h);
 
+  SDL_Rect texture_rect;
+  texture_rect.x = texture_rect.y = 0;
+  SDL_QueryTexture(tex, nullptr, nullptr, &texture_rect.w, &texture_rect.h);
+
   SDL_SetRenderTarget(ren, nullptr);
 
-  SDL_RenderCopy(ren, tex, &screen_rect, &screen_rect);
+  SDL_RenderCopy(ren, tex, &texture_rect, &texture_rect);
 
   SDL_RenderPresent(ren);
 }
@@ -333,6 +351,10 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
 
 std::pair<int, int> TermWin::cell_size() const {
   return {cell_width, cell_height};
+}
+
+void TermWin::set_window_title(std::string_view data) {
+  SDL_SetWindowTitle(win, data.data());
 }
 
 } // namespace gfx

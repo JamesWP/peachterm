@@ -22,6 +22,7 @@ public:
               std::string_view /*options*/) override;
   void on_ri() override;
   void on_esc(char op) override;
+  void on_osi(int op, std::string_view) override;
 
   // Helper functions.
   void adjust_cursor(int rows_n, int cols_n);
