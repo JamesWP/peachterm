@@ -280,6 +280,10 @@ void TermWin::redraw() {
       // Begin draw character.
       SDL_Surface *cellSurf = TTF_RenderUTF8_Blended(font, glyph, fg);
       SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
+
+      // Read back the size of the character
+      SDL_QueryTexture(cellTex, nullptr, nullptr, &cell_rect.w, &cell_rect.h);
+
       SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
       SDL_RenderFillRect(ren, &cell_rect);
       SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
