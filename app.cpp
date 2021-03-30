@@ -9,6 +9,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string.h>
 
 namespace app {
@@ -119,7 +120,7 @@ void App::csi_m(const std::vector<int> &args) {
   // return;
   using A = gfx::TermCell::Attr;
 
-  auto extended_color = [&](auto &col, auto &i) {
+  auto extended_color = [&](auto &colour, auto &i) {
     if (++i == args.end())
       return;
 
@@ -129,53 +130,53 @@ void App::csi_m(const std::vector<int> &args) {
       return;
 
     if (_256) {
-      col = colors::table[*i];
+      colour = colors::table[*i];
       return;
     }
 
     if (++i == args.end())
       return;
 
-    col = *i;
-    col <<= 8;
+    colour = *i;
+    colour <<= 8;
 
     if (++i == args.end())
       return;
 
-    col |= 0xFF & *i;
-    col <<= 8;
+    colour |= 0xFF & *i;
+    colour <<= 8;
 
     if (++i == args.end())
       return;
 
-    col |= 0xFF & *i;
-    col <<= 8;
+    colour |= 0xFF & *i;
+    colour <<= 8;
 
-    col |= 0xFF;
+    colour |= 0xFF;
   };
 
   for (auto i = args.begin(); i != args.end(); i++) {
     int arg = *i;
     bool fg = arg >= 30 && arg < 40;
-    uint32_t &col = fg ? cell.fg_col : cell.bg_col;
+    uint32_t &colour = fg ? cell.fg_col : cell.bg_col;
 
     // clang-format off
           switch (arg) {
-          case 0: 
-            cell_reset(A::BOLD, A::ITALIC, A::OVERLINE, A::UNDERLINE, 
+          case 0:
+            cell_reset(A::BOLD, A::ITALIC, A::OVERLINE, A::UNDERLINE,
                        A::DUNDERLINE, A::STRIKE, A::FEINT, A::REVERSE);
             cell.fg_col = reset.fg_col;
             cell.bg_col = reset.bg_col;
                                                   break; // Reset all
           case 1: cell_set(A::BOLD);              break;
           case 2: cell_set(A::FEINT);             break;
-          case 3: cell_set(A::ITALIC);            break; 
+          case 3: cell_set(A::ITALIC);            break;
           case 4: cell_set(A::UNDERLINE);         break;
           case 7: cell_set(A::REVERSE);           break;
-          case 9: cell_set(A::STRIKE);            break; 
+          case 9: cell_set(A::STRIKE);            break;
           case 21: cell_set(A::DUNDERLINE);       break;
           case 22: cell_reset(A::BOLD, A::FEINT); break;
-          case 23: cell_reset(A::ITALIC);         break; 
+          case 23: cell_reset(A::ITALIC);         break;
           case 24: cell_reset(A::UNDERLINE);      break;
           case 27: cell_reset(A::REVERSE);        break;
           case 29: cell_reset(A::STRIKE);         break;
@@ -185,32 +186,32 @@ void App::csi_m(const std::vector<int> &args) {
           // Font.
           case 10:
             // Reset font.
-            break; 
+            break;
           case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19:
-            // Alternative font. 
-            break; 
+            // Alternative font.
+            break;
 
           // Color.
           case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
           case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
             // Set color. 8 color.
-            col = colors::table[arg - (fg?30:40)];
-            break; 
+            colour = colors::table[arg - (fg?30:40)];
+            break;
           case 38: case 48:
             // Set  color
             // Next arguments are 5;n or 2;r;g;b
-            extended_color(col, i);
+            extended_color(colour, i);
             break;
           case 39: case 49:
             // Reset color.
-            col = fg ? reset.fg_col : reset.bg_col;
-            break; 
+            colour = fg ? reset.fg_col : reset.bg_col;
+            break;
           }
     // clang-format on
   }
 }
 
-void App::process_di() { pt_p->write("\e[65;1;9c"); }
+void App::process_di() { pt_p->write("\033[65;1;9c"); }
 
 void App::process_decrst(int arg, bool q) {
   if (q) {
@@ -254,9 +255,9 @@ void App::process_decset(int arg, bool q) {
 void App::process_status_report(int arg) {
   std::ostringstream command_buffer;
   if (arg == 6) {
-    command_buffer << "\33[" << col + 1 << ";" << row + 1 << "R";
+    command_buffer << "\033[" << col + 1 << ";" << row + 1 << "R";
   } else if (arg == 5) {
-    command_buffer << "\33[0n";
+    command_buffer << "\033[0n";
   }
   pt_p->write(command_buffer.str());
 }
@@ -310,7 +311,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'h': process_decset(arg(0,0),q);                  break;
   case 'l': process_decrst(arg(0,0),q);                  break;
   case 'n': process_status_report(arg(0));               break;
-  case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break; 
+  case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break;
   case 'r': set_scroll_region(ag1(0,1), ag1(1, rows));   break;
   case 's': process_decset(arg(0,0),q);                  break;
   }
@@ -438,7 +439,7 @@ void run() {
         case SDL_WINDOWEVENT_SIZE_CHANGED: {
           int width = e.window.data1;
           int height = e.window.data2;
-          
+
           std::cout << "Window resized: " << width << "x" << height
                     << std::endl;
           term.window.dirty();

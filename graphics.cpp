@@ -6,6 +6,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <cassert>
 
 namespace gfx {
 
@@ -253,7 +254,7 @@ void TermWin::redraw() {
       curs_rect.y = cell_top_y + cell_height - curs_height;
 
       // Cell font;
-      TTF_Font *font;
+      TTF_Font *font = nullptr;
       if (!cell.bold && !cell.italic)
         font = fontRegular;
       if (!cell.bold && cell.italic)
@@ -262,6 +263,8 @@ void TermWin::redraw() {
         font = fontBold;
       if (cell.bold && cell.italic)
         font = fontBoldItalic;
+
+      assert(font);
 
       // And now, actual drawing.
 

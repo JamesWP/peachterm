@@ -12,9 +12,9 @@ uint32_t Repack(std::array<uint32_t, 3> rgb) {
       s = std::min(s, (l - 255.f) / (l - rgb[1]));
     if (rgb[2] > 255)
       s = std::min(s, (l - 255.f) / (l - rgb[2]));
-    rgb[0] = (rgb[0] - l) * s + l + 0.5f;
-    rgb[1] = (rgb[1] - l) * s + l + 0.5f;
-    rgb[2] = (rgb[2] - l) * s + l + 0.5f;
+    rgb[0] = static_cast<uint32_t>((rgb[0] - l) * s + l + 0.5f);
+    rgb[1] = static_cast<uint32_t>((rgb[1] - l) * s + l + 0.5f);
+    rgb[2] = static_cast<uint32_t>((rgb[2] - l) * s + l + 0.5f);
   }
   return (std::min(rgb[0], 255u) << 24) + (std::min(rgb[1], 255u) << 16) +
          (std::min(rgb[2], 255u) << 8) + 0xFF;

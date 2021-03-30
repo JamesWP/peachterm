@@ -1,6 +1,7 @@
 #include "util.hpp"
 
 #include <gtest/gtest.h>
+#include <algorithm>
 
 using namespace ::testing;
 using namespace util;

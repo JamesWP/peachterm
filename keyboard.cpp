@@ -109,8 +109,8 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
       return {buffer, (size_t)std::sprintf(buffer, "\33%c%d%c", bracket,
                                            d.first, d.second)};
 
-  } else if (auto i = lore2.find(sym); i != lore2.end()) {
-    char &cval = buffer[0] = i->second;
+  } else if (auto j = lore2.find(sym); j != lore2.end()) {
+    char &cval = buffer[0] = j->second;
 
     bool digit = cval >= '0' && cval <= '9';
     bool alpha = cval >= 'a' && cval <= 'z';
@@ -121,10 +121,10 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
     }
 
     if (ctrl && digit) {
-      cval = "01\0\33\34\35\36\37\1779"[cval - '0'];
+      cval = "\060\061\000\33\34\35\36\37\177\071"[cval - '0'];
     }
 
-    if (ctrl && i->second == '\177') {
+    if (ctrl && j->second == '\177') {
       cval = '\b';
     } else if (ctrl && !digit) {
       // Turn into a control character.
