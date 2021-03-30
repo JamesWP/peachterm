@@ -7,7 +7,7 @@
 #include <thread>
 #include <vector>
 
-#include <boost/asio.hpp>
+// #include <boost/asio.hpp>
 
 namespace io {
 class PseudoTerminal {
@@ -24,12 +24,12 @@ private:
   std::vector<char> write_buffer;
   std::vector<char> read_buffer;
 
-  boost::asio::io_service service;
-  boost::asio::posix::stream_descriptor stream;
+  // boost::asio::io_service service;
+  // boost::asio::posix::stream_descriptor stream;
 
   std::thread t;
 
-  boost::asio::io_service::work work;
+  // boost::asio::io_service::work work;
 
 public:
   PseudoTerminal(data_read_cb);

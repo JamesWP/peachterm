@@ -62,7 +62,7 @@ void TermWin::load_fonts(int pointSize) {
     TTF_CloseFont(fontRegular);
   }
   fontRegular = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
+      "UbuntuMono-R.ttf", pointSize);
   //fontRegular = TTF_OpenFont(
   //      "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", pointSize);
 
@@ -70,19 +70,19 @@ void TermWin::load_fonts(int pointSize) {
     TTF_CloseFont(fontRegularItalic);
   }
   fontRegularItalic = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-RI.ttf", pointSize);
+      "UbuntuMono-RI.ttf", pointSize);
 
   if(fontBold!=0) {
     TTF_CloseFont(fontBold);
   }
-  fontBold = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf",
+  fontBold = TTF_OpenFont("UbuntuMono-B.ttf",
                           pointSize);
 
   if(fontBoldItalic!=0) {
     TTF_CloseFont(fontBoldItalic);
   }
   fontBoldItalic = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
+      "UbuntuMono-BI.ttf", pointSize);
 
   std::cout << fontRegular << fontRegularItalic << fontBold << fontBoldItalic
             << std::endl;

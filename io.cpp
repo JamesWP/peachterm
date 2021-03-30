@@ -2,33 +2,39 @@
 
 #include <chrono>
 #include <iostream>
+#include <string>
+#include <ctype.h>
 
+#if defined(_WIN32)
+#elif defined(__unix)
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#endif
 
 namespace io {
 PseudoTerminal::PseudoTerminal(data_read_cb data_cb)
     : _data_cb(data_cb), write_buffer(1024, '\0'),
-      read_buffer(1024, '\0'), stream{service}, work{service} {}
+      read_buffer(1024, '\0') //, stream{service}, work{service}
+      {}
 
 PseudoTerminal::~PseudoTerminal() {
-  service.stop();
+  //service.stop();
   t.join();
 }
 
 void PseudoTerminal::read_complete() {
-  stream.async_read_some(
-      boost::asio::buffer(read_buffer.data(), read_buffer.size()),
-      [this](const boost::system::error_code &err, long unsigned int length) {
-        if (err) {
-          std::cerr << "Error message: " << err.message() << "\n";
-          this->_data_cb(this, nullptr, 0u);
-          return;
-        }
+  // stream.async_read_some(
+  //     boost::asio::buffer(read_buffer.data(), read_buffer.size()),
+  //     [this](const boost::system::error_code &err, long unsigned int length) {
+  //       if (err) {
+  //         std::cerr << "Error message: " << err.message() << "\n";
+  //         this->_data_cb(this, nullptr, 0u);
+  //         return;
+  //       }
 
-        this->_data_cb(this, read_buffer.data(), length);
-      });
+  //       this->_data_cb(this, read_buffer.data(), length);
+  //     });
 }
 
 void PseudoTerminal::write(char data) { write(&data, 1u); }
@@ -41,7 +47,7 @@ void PseudoTerminal::write(const char *data, size_t len) {
   std::cout << "Write pt length= " << len << ": ";
   size_t _len = len;
   for (const char *d = data; _len-- > 0; d++) {
-    if (std::isprint(*d)) {
+    if (::isprint(*d)) {
       std::cout << *d;
     } else {
       std::cout << '\\' << 'x' << std::hex << (int)(*d & 0xFF) << std::dec;
@@ -49,92 +55,125 @@ void PseudoTerminal::write(const char *data, size_t len) {
   }
   std::cout << '\n';
 
-  boost::asio::write(stream, boost::asio::buffer(data, len));
+  static std::string buff;
+
+  buff.clear();
+  buff.append(data, len);
+  // Echo hack:
+  this->_data_cb(this, buff.data(), buff.size());
+
+  //boost::asio::write(stream, boost::asio::buffer(data, len));
 }
 
 bool PseudoTerminal::start() {
   std::cout << "Start PT\n";
 
-  parentfd = posix_openpt(O_RDWR | O_NOCTTY);
+  // parentfd = posix_openpt(O_RDWR | O_NOCTTY);
 
-  if (parentfd == -1) {
-    return false;
-  }
+  // if (parentfd == -1) {
+  //   return false;
+  // }
 
-  fcntl(parentfd, F_SETFL, fcntl(parentfd, F_GETFL) | O_NONBLOCK);
+  // fcntl(parentfd, F_SETFL, fcntl(parentfd, F_GETFL) | O_NONBLOCK);
 
-  if (grantpt(parentfd) == -1) {
-    return false;
-  }
+  // if (grantpt(parentfd) == -1) {
+  //   return false;
+  // }
 
-  if (unlockpt(parentfd) == -1) {
-    return false;
-  }
+  // if (unlockpt(parentfd) == -1) {
+  //   return false;
+  // }
 
-  char *pts_name = ptsname(parentfd);
+  // char *pts_name = ptsname(parentfd);
 
-  if (pts_name == nullptr) {
-    return false;
-  }
+  // if (pts_name == nullptr) {
+  //   return false;
+  // }
 
-  childfd = open(pts_name, O_RDWR | O_NOCTTY);
+  // childfd = open(pts_name, O_RDWR | O_NOCTTY);
 
-  if (childfd == -1) {
-    return false;
-  }
+  // if (childfd == -1) {
+  //   return false;
+  // }
 
   return true;
 }
 
 bool PseudoTerminal::set_size(int rows, int cols) {
-  struct winsize ws;
-  ws.ws_row = rows;
-  ws.ws_col = cols;
+  (void) rows;
+  (void) cols;
+  // struct winsize ws;
+  // ws.ws_row = rows;
+  // ws.ws_col = cols;
 
-  return -1 != ioctl(parentfd, TIOCSWINSZ, &ws);
+  // return -1 != ioctl(parentfd, TIOCSWINSZ, &ws);
+  return true;
 }
 
 bool PseudoTerminal::fork_child() {
 
-  pid_t p = fork();
-  if (p == 0) {
-    close(parentfd);
+  // pid_t p = fork();
+  // if (p == 0) {
+  //   close(parentfd);
 
-    setsid();
+  //   setsid();
 
-    if (ioctl(childfd, TIOCSCTTY, nullptr) == -1) {
-      return false;
+  //   if (ioctl(childfd, TIOCSCTTY, nullptr) == -1) {
+  //     return false;
+  //   }
+
+  //   dup2(childfd, 0);
+  //   dup2(childfd, 1);
+  //   dup2(childfd, 2);
+  //   close(childfd);
+
+  //   ::setenv("TERM", "xterm-256color", 1);
+
+  //   execlp("/usr/bin/bash", "-/usr/bin/bash", nullptr);
+  //   return false;
+  // } else if (p > 0) {
+  //   close(childfd);
+
+  //   stream.assign(parentfd);
+
+  //   std::thread thread{[this]() {
+  //     std::cout << "IO thread\n";
+
+  //     this->service.run();
+
+  //     std::cout << "IO thread exiting\n";
+  //   }};
+
+  //   std::swap(t, thread);
+
+  //   read_complete();
+
+  //   return true;
+  // }
+
+  std::thread thread{[this]() {
+    std::cout << "IO thread\n";
+
+    //this->service.run();
+    std::string str;
+
+    for(int i =0; i < 100;i++) {
+      str.clear();
+
+      str.append("This is a string, its ");
+      str += std::to_string(i);
+      str.append("\n\r");
+      //this->_data_cb(this, str.data(), str.size());
+
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(1s);
     }
 
-    dup2(childfd, 0);
-    dup2(childfd, 1);
-    dup2(childfd, 2);
-    close(childfd);
+    std::cout << "IO thread exiting\n";
+  }};
 
-    ::setenv("TERM", "xterm-256color", 1);
+  std::swap(t, thread);
 
-    execlp("/usr/bin/bash", "-/usr/bin/bash", nullptr);
-    return false;
-  } else if (p > 0) {
-    close(childfd);
-
-    stream.assign(parentfd);
-
-    std::thread thread{[this]() {
-      std::cout << "IO thread\n";
-
-      this->service.run();
-
-      std::cout << "IO thread exiting\n";
-    }};
-
-    std::swap(t, thread);
-
-    read_complete();
-
-    return true;
-  }
-
-  return false;
+  return true;
 }
 } // namespace io
