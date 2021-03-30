@@ -31,7 +31,7 @@ TermWin::TermWin(int rows = 24, int cols = 80, int pointSize = 10) {
   const int window_height = rows * cell_height;
 
   win = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED,
-                         SDL_WINDOWPOS_UNDEFINED, window_width, window_height, 
+                         SDL_WINDOWPOS_UNDEFINED, window_width, window_height,
                          SDL_WINDOW_RESIZABLE);
 
   SDL_SetWindowInputFocus(win);
@@ -83,7 +83,7 @@ void TermWin::load_fonts(int pointSize) {
   fontBoldItalic = TTF_OpenFont(
       "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
 
-  std::cout << fontRegular << fontRegularItalic << fontBold << fontBoldItalic 
+  std::cout << fontRegular << fontRegularItalic << fontBold << fontBoldItalic
             << std::endl;
 
   int advance;
@@ -93,7 +93,7 @@ void TermWin::load_fonts(int pointSize) {
   font_height = TTF_FontHeight(fontRegular);
 
   // if (font_height>30) { font_height = 30; }
-  // if(advance>15) {advance = 15; } 
+  // if(advance>15) {advance = 15; }
 
   cell_height = font_height;
   cell_width = advance;
@@ -222,16 +222,16 @@ void TermWin::redraw() {
 
       // Cell content.
       const char *glyph = cell.glyph.c_str();
-  
+
       // Cell color.
       SDL_Color fg, bg;
-      fg.r = (cell.fg_col & 0xFF000000) >> 24;
-      fg.g = (cell.fg_col & 0x00FF0000) >> 16;
-      fg.b = (cell.fg_col & 0x0000FF00) >> 8;
+      fg.r = static_cast<uint8_t>((cell.fg_col & 0xFF000000) >> 24);
+      fg.g = static_cast<uint8_t>((cell.fg_col & 0x00FF0000) >> 16);
+      fg.b = static_cast<uint8_t>((cell.fg_col & 0x0000FF00) >> 8);
       fg.a = 0xFF;
-      bg.r = (cell.bg_col & 0xFF000000) >> 24;
-      bg.g = (cell.bg_col & 0x00FF0000) >> 16;
-      bg.b = (cell.bg_col & 0x0000FF00) >> 8;
+      bg.r = static_cast<uint8_t>((cell.bg_col & 0xFF000000) >> 24);
+      bg.g = static_cast<uint8_t>((cell.bg_col & 0x00FF0000) >> 16);
+      bg.b = static_cast<uint8_t>((cell.bg_col & 0x0000FF00) >> 8);
       bg.a = 0xFF;
 
       // Cursor.
