@@ -37,4 +37,15 @@ public:
 
   const T &value() const { return _t; }
 };
+
+
+template< typename F>
+class ScopeExit {
+public:
+  explicit ScopeExit(F&& fn): _fn(std::move(fn)) {}
+  ~ScopeExit() { _fn(); }
+private:
+  F _fn;
+};
+
 }; // namespace util
