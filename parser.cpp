@@ -1,5 +1,11 @@
 #include "parser.hpp"
 
+#include <string>
+#include <cctype>
+#include <cassert>
+#include "util.hpp"
+
+#if defined(__unix)
 #include <unicode/brkiter.h>
 #include <unicode/locid.h>
 #include <unicode/utext.h>
@@ -13,49 +19,41 @@ std::ostream &operator<<(std::ostream &out, STATE s) {
 VTParser::VTParser() : state{STATE::NORMAL} {}
 
 void VTParser::parse_input(const char *input, size_t length) {
-  UErrorCode err = U_ZERO_ERROR;
+  UErrorCode status = U_ZERO_ERROR;
+  UBreakIterator* iter = ubrk_open(UBRK_CHARACTER, ULOC_UK, nullptr, 0, &status);
 
-  UText *text = utext_openUTF8(nullptr, input, length, &err);
+  assert(!U_FAILURE(status));
 
-  if (U_FAILURE(err))
-    throw std::runtime_error("Failed to open text");
+  auto _e = util::ScopeExit([&](){ ubrk_close(iter); });
 
-  icu::Locale locale;
+  UText *text = utext_openUTF8(nullptr, input, length, &status);
 
-  icu::BreakIterator *it =
-      icu::BreakIterator::createCharacterInstance(locale, err);
+  auto _f = util::ScopeExit([&](){ utext_close(text); });
 
-  if (U_FAILURE(err))
-    throw std::runtime_error("Failed to create break it");
+  assert(!U_FAILURE(status));
 
-  it->setText(text, err);
+  ubrk_setUText(iter, text, &status);
 
-  if (U_FAILURE(err))
-    throw std::runtime_error("Failed to create break it");
+  assert(!U_FAILURE(status));
 
-  uint32_t end = static_cast<uint32_t>(icu::BreakIterator::DONE);
+  for(int32_t pos = ubrk_next(iter), last_pos = 0; pos != UBRK_DONE; pos = ubrk_next(iter)) {
+    size_t glyph_length = pos - last_pos;
 
-  uint32_t last_pos = it->first();
-
-  for (uint32_t pos = it->next(); pos != end; pos = it->next()) {
-    size_t length = pos - last_pos;
-    if (length == 1u) {
+    if (glyph_length == 1u) {
       char c = input[last_pos];
       parse_input(c);
-    } else if (length == 2u &&
+    } else if (glyph_length == 2u &&
                ((input[last_pos] == '\r' && input[last_pos + 1] == '\n') ||
                 (input[last_pos] == '\n' && input[last_pos + 1] == '\r'))) {
       // for some reason the character breaker combines return and newline
       on_return();
       on_newline();
     } else {
-      on_glyph(input + last_pos, length);
+      on_glyph(input + last_pos, glyph_length);
     }
+
     last_pos = pos;
   }
-
-  delete it;
-  utext_close(text);
 }
 
 bool is_final_csi(char c) { return c >= 0x40 && c <= 0x7c; }
@@ -125,7 +123,7 @@ void VTParser::parse_input(char c) {
     }
 
     command.push_back(c);
-    
+
     break;
   case STATE::CHARSET:
     state = STATE::NORMAL;
