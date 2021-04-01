@@ -13,7 +13,6 @@ set(DEPS_LIBRARIES pthread boost_system)
 endif(UNIX)
 
 if(WIN32)
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 find_package(SDL2 REQUIRED)
 find_package(SDL2TTF REQUIRED)
 find_package(GTest REQUIRED)
