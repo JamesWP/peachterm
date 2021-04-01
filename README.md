@@ -51,3 +51,18 @@ $ ./main
 'n'
 't'
 ```
+
+## Building on windows
+
+Cmake modules:
+- FindSDL2.cmake
+- FindSDL2TTF.cmake
+
+Configure args:
+- -DCMAKE_LIBRARY_ARCHITECTURE=x86
+- -DCMAKE_MODULE_PATH=C:\SomePath\cmake-modules\
+
+Env vars:
+- SDL2DIR=C:\SomePath\SDL2-2.0.14
+- SDL2TTFDIR=C:\SomePath\SDL2_ttf-2.0.15
+- GTEST_ROOT=C:\SomePath\googletest-distribution

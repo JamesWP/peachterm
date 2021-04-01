@@ -3,10 +3,31 @@ project(jterm)
 
 enable_testing()
 
+if(UNIX)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf fontconfig)
 
 find_package(ICU COMPONENTS uc REQUIRED)
+set(DEPS_LIBRARIES pthread boost_system)
+endif(UNIX)
+
+if(WIN32)
+find_package(SDL2 REQUIRED)
+find_package(SDL2TTF REQUIRED)
+find_package(GTest REQUIRED)
+
+set(DEPS_INCLUDE_DIRS ${SDL2_INCLUDE_DIR} ${SDL2TTF_INCLUDE_DIR})
+set(DEPS_LIBRARIES ${SDL2_LIBRARY} ${SDL2TTF_LIBRARY} icuuc icuin)
+message(STATUS "linking: " ${DEPS_LIBRARIES})
+message(STATUS "including: " ${DEPS_INCLUDE_DIRS})
+endif(WIN32)
+
+# Flags ----------------
+if(MSVC)
+set(EXTRA_CXX_FLAGS /WX /W4 -D _CRT_SECURE_NO_WARNINGS)
+else()
+set(EXTRA_CXX_FLAGS -Wall -Wextra -Werror)
+endif()
 
 add_library(jterm graphics.cpp app.cpp io.cpp parser.cpp keyboard.cpp colors.cpp vterm.cpp termhistory.cpp fonts.cpp)
 target_include_directories(jterm PUBLIC ${DEPS_INCLUDE_DIRS} .)
