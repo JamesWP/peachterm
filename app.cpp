@@ -358,7 +358,7 @@ void run() {
 
   int rows = 24;
   int cols = 80;
-  int pointSize = 12;
+  int pointSize = 14;
 
   std::string pending_input;
 
@@ -380,6 +380,10 @@ void run() {
   std::cout << "App run\n";
 
   App term{rows, cols, pointSize, &pt};
+
+  auto hist = std::make_shared<TermHistory>();
+
+  term.window.set_scrollback(hist);
 
   SDL_Event e;
 

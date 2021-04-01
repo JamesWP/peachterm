@@ -340,6 +340,11 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
     // blank lines are at the end.
     // clear mid - end.
     auto end = row_it(end_row);
+    for (auto b=mid;b!=end; b+=num_cols) {
+      if (scrollback) {
+        scrollback->add_row_to_history(b, b+num_cols);
+      }
+    }
     for (auto b = mid; b != end; b++) {
       *b = clear;
     }
@@ -347,6 +352,11 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
     // blank lines are at the start.
     // clear start - mid.
     auto begin = row_it(begin_row);
+    for (auto b=begin;b!=mid; b+=num_cols) {
+      if (scrollback) {
+        scrollback->add_row_to_history(b, b+num_cols);
+      }
+    }
     for (auto b = begin; b != mid; b++) {
       *b = clear;
     }

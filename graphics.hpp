@@ -2,8 +2,11 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <memory>
 
 #include "util.hpp"
+#include "termcell.hpp"
+#include "termhistory.hpp"
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -28,47 +31,6 @@ public:
   context &operator=(const context &) = delete;
 };
 
-struct TermCell {
-  std::string glyph = " ";
-  uint32_t fg_col = 0xFFFFFFFF;
-  uint32_t bg_col = 0x000000FF;
-  bool bold = false;
-  bool italic = false;
-  bool overline = false;
-  bool underline = false;
-  bool dunderline = false;
-  bool strike = false;
-  bool feint = false;
-  bool reverse = false;
-
-public:
-  enum class Attr {
-    BOLD,
-    ITALIC,
-    FG,
-    BG,
-    OVERLINE,
-    UNDERLINE,
-    DUNDERLINE,
-    STRIKE,
-    FEINT,
-    REVERSE
-  };
-
-  friend inline bool operator==(const TermCell &l, const TermCell &r) {
-    return std::tie(l.fg_col, l.bg_col, l.bold, l.italic, l.overline, 
-                    l.underline, l.dunderline, l.strike, l.feint, 
-                    l.reverse, l.glyph) ==
-           std::tie(r.fg_col, r.bg_col, r.bold, r.italic, l.overline, 
-                    r.underline, r.dunderline, r.strike, r.feint, 
-                    r.reverse, r.glyph);
-  }
-
-  friend inline bool operator!=(const TermCell &l, const TermCell &r) {
-    return !(l == r);
-  }
-};
-
 enum class Direction { UP, DOWN };
 
 class TermWin {
@@ -86,6 +48,8 @@ class TermWin {
   std::vector<util::DirtyTracker<TermCell>> normalScreen;
   std::vector<util::DirtyTracker<TermCell>> alternativeScreen;
 
+  std::shared_ptr<TermHistory> scrollback;
+
   int num_rows;
   int num_cols;
   int cell_width = 6;
@@ -102,6 +66,7 @@ public:
   TermWin(const TermWin &) = delete;
   TermWin &operator=(const TermWin &) = delete;
 
+  void set_scrollback(std::shared_ptr<TermHistory> hist_sp);
   void load_fonts(int pointSize);
   // resize grid
   void resize_term(int rows, int cols);
@@ -125,5 +90,6 @@ public:
 
 inline bool& TermWin::screen_mode_normal() { return isNormalScreen; }
 inline void TermWin::clear_screen() { clear_rows(0, num_rows); }
+inline void TermWin::set_scrollback(std::shared_ptr<TermHistory> hist_sp) { this->scrollback = hist_sp; }
 
 } // namespace gfx

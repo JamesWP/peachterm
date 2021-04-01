@@ -139,9 +139,9 @@ void VTParser::parse_input(char c) {
 }
 
 void VTParser::dispatch_osi(const char *data, size_t length) {
-  std::cout << "OSI: '";
-  std::cout.write(data, length);
-  std::cout << "'\n";
+  //std::cout << "OSI: '";
+  //std::cout.write(data, length-1);
+  //std::cout << "'\n";
 
   std::string_view operation = {data, length};
 

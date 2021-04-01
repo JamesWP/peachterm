@@ -8,7 +8,7 @@ pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf)
 
 find_package(ICU COMPONENTS uc REQUIRED)
 
-add_library(jterm graphics.cpp app.cpp io.cpp parser.cpp keyboard.cpp colors.cpp vterm.cpp)
+add_library(jterm graphics.cpp app.cpp io.cpp parser.cpp keyboard.cpp colors.cpp vterm.cpp termhistory.cpp)
 target_include_directories(jterm PUBLIC ${DEPS_INCLUDE_DIRS} .)
 target_link_libraries(jterm PUBLIC ${DEPS_LIBRARIES} ${ICU_LIBRARIES} pthread boost_system)
 target_compile_options(jterm PUBLIC -Wall -Wextra -Werror -std=c++17)

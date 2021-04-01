@@ -28,6 +28,7 @@ $ ./main
 - display termsize on change
 - add fading toasts for info messages
 - add record mode for debug and replay
+- redraw screen when exposed again.
 
 ## CSI codes
 ```
