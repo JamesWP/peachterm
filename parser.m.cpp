@@ -1,5 +1,4 @@
 #include "parser.hpp"
-#include "sample_vim.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -13,7 +12,7 @@ public:
   MOCK_METHOD0(on_newline, void(void));
   MOCK_METHOD0(on_return, void(void));
   MOCK_METHOD2(on_csi, void(const char *, size_t));
-  MOCK_METHOD2(on_osi, void(const char *, size_t));
+  MOCK_METHOD2(on_osi, void(int, std::string_view));
 };
 
 TEST(VTParser, Simple) {
@@ -76,13 +75,13 @@ TEST(VTParser, Newline) {
   p.parse_input(input, sizeof(input) - 1);
 }
 
-TEST(VTParser, LargeSampleVim) {
-  MockVTParser p;
+// TEST(VTParser, LargeSampleVim) {
+//   MockVTParser p;
 
-  EXPECT_CALL(p, on_glyph(_, _)).WillRepeatedly(Return());
+//   EXPECT_CALL(p, on_glyph(_, _)).WillRepeatedly(Return());
 
-  p.parse_input(sample_vim, sizeof(sample_vim));
-}
+//   p.parse_input(sample_vim, sizeof(sample_vim));
+// }
 
 TEST(VTParser, MinimalMan) {
   MockVTParser p;
