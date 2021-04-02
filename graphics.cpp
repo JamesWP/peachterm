@@ -25,9 +25,7 @@ context::~context() {
   SDL_Quit();
 }
 
-TermWin::TermWin(int rows = 24, int cols = 80, int pointSize = 10) {
-  this->load_fonts(pointSize);
-
+TermWin::TermWin(int rows = 24, int cols = 80) {
   const int window_width = cols * cell_width;
   const int window_height = rows * cell_height;
 
@@ -57,35 +55,30 @@ TermWin::~TermWin() {
   SDL_DestroyWindow(win);
 }
 
-void TermWin::load_fonts(int pointSize) {
+void TermWin::load_fonts(const FontSpec& spec) {
   if(fontRegular!=0) {
     TTF_CloseFont(fontRegular);
   }
-  fontRegular = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", pointSize);
-  //fontRegular = TTF_OpenFont(
-  //      "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", pointSize);
+  fontRegular = TTF_OpenFont(spec.regular.c_str(), spec.pointsize);
+  assert(fontRegular);
 
   if(fontRegularItalic!=0) {
     TTF_CloseFont(fontRegularItalic);
   }
-  fontRegularItalic = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-RI.ttf", pointSize);
+  fontRegularItalic = TTF_OpenFont(spec.italic.c_str(), spec.pointsize);
+  assert(fontRegularItalic);
 
   if(fontBold!=0) {
     TTF_CloseFont(fontBold);
   }
-  fontBold = TTF_OpenFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf",
-                          pointSize);
+  fontBold = TTF_OpenFont(spec.bold.c_str(), spec.pointsize);
+  assert(fontBold);
 
   if(fontBoldItalic!=0) {
     TTF_CloseFont(fontBoldItalic);
   }
-  fontBoldItalic = TTF_OpenFont(
-      "/usr/share/fonts/truetype/ubuntu/UbuntuMono-BI.ttf", pointSize);
-
-  std::cout << fontRegular << fontRegularItalic << fontBold << fontBoldItalic
-            << std::endl;
+  fontBoldItalic = TTF_OpenFont(spec.bolditalic.c_str(), spec.pointsize);
+  assert(fontBoldItalic);
 
   int advance;
   TTF_GlyphMetrics(fontRegular, '&', nullptr, nullptr, nullptr, nullptr,
@@ -93,12 +86,9 @@ void TermWin::load_fonts(int pointSize) {
 
   font_height = TTF_FontHeight(fontRegular);
 
-  // if (font_height>30) { font_height = 30; }
-  // if(advance>15) {advance = 15; }
-
   cell_height = font_height;
   cell_width = advance;
-  font_point = pointSize;
+  font_point = spec.pointsize;
 }
 
 void TermWin::resize_term(int rows, int cols) {
@@ -264,8 +254,6 @@ void TermWin::redraw() {
       if (cell.bold && cell.italic)
         font = fontBoldItalic;
 
-      assert(font);
-
       // And now, actual drawing.
 
       // Don't draw an unchanged cell, ..., unless it's the cursor.
@@ -280,18 +268,20 @@ void TermWin::redraw() {
       SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
       SDL_RenderFillRect(ren, &curs_rect);
 
-      // Begin draw character.
-      SDL_Surface *cellSurf = TTF_RenderUTF8_Blended(font, glyph, fg);
-      SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
+      if (font) {
+        // Begin draw character.
+        SDL_Surface *cellSurf = TTF_RenderUTF8_Blended(font, glyph, fg);
+        SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
 
-      // Read back the size of the character
-      SDL_QueryTexture(cellTex, nullptr, nullptr, &cell_rect.w, &cell_rect.h);
+        // Read back the size of the character
+        SDL_QueryTexture(cellTex, nullptr, nullptr, &cell_rect.w, &cell_rect.h);
 
-      SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
-      SDL_RenderFillRect(ren, &cell_rect);
-      SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
-      SDL_DestroyTexture(cellTex);
-      SDL_FreeSurface(cellSurf);
+        SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
+        SDL_RenderFillRect(ren, &cell_rect);
+        SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
+        SDL_DestroyTexture(cellTex);
+        SDL_FreeSurface(cellSurf);
+      }
 
       if (is_cursor) {
         // Begin draw cursor.

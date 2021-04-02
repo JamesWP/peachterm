@@ -9,6 +9,7 @@
 #include <unicode/brkiter.h>
 #include <unicode/locid.h>
 #include <unicode/utext.h>
+#endif
 
 namespace parser {
 

@@ -4,11 +4,11 @@ project(jterm)
 enable_testing()
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf)
+pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf fontconfig)
 
 find_package(ICU COMPONENTS uc REQUIRED)
 
-add_library(jterm graphics.cpp app.cpp io.cpp parser.cpp keyboard.cpp colors.cpp vterm.cpp termhistory.cpp)
+add_library(jterm graphics.cpp app.cpp io.cpp parser.cpp keyboard.cpp colors.cpp vterm.cpp termhistory.cpp fonts.cpp)
 target_include_directories(jterm PUBLIC ${DEPS_INCLUDE_DIRS} .)
 target_link_libraries(jterm PUBLIC ${DEPS_LIBRARIES} ${ICU_LIBRARIES} pthread boost_system)
 target_compile_options(jterm PUBLIC -Wall -Wextra -Werror -std=c++17)
@@ -33,3 +33,7 @@ target_link_libraries(util-main PRIVATE jterm gtest gmock gtest_main)
 target_compile_options(util-main PRIVATE -Wall -Wextra -Werror)
 add_test(NAME util-unit-tests COMMAND util-main)
 
+add_executable(font-main font.m.cpp)
+target_include_directories(font-main PRIVATE ${DEPS_INCLUDE_DIRS})
+target_compile_options(font-main PUBLIC -Wall -Wextra -Werror -std=c++17)
+target_link_libraries(font-main PRIVATE jterm ${DEPS_LIBRARIES})

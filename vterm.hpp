@@ -22,7 +22,7 @@ public:
   gfx::TermCell cell;
   gfx::TermCell reset;
 
-  VTerm(int rows, int cols, int pointSize = 14);
+  VTerm(int rows, int cols);
 
   void resize(int rows, int cols, int pointSize);
   void resize(int rows, int cols);

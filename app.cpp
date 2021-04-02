@@ -341,7 +341,7 @@ size_t strnlen_s(const char *s, size_t len) {
   return 0;
 }
 
-void run() {
+void run(const gfx::FontSpec& spec) {
   const uint32_t data_available_event = SDL_RegisterEvents(1);
 
   SDL_Event data_available;
@@ -359,7 +359,6 @@ void run() {
 
   int rows = 24;
   int cols = 80;
-  int pointSize = 14;
 
   std::string pending_input;
 
@@ -380,11 +379,13 @@ void run() {
 
   std::cout << "App run\n";
 
-  App term{rows, cols, pointSize, &pt};
+  App term{rows, cols, &pt};
 
   auto hist = std::make_shared<TermHistory>();
 
   term.window.set_scrollback(hist);
+
+  term.window.load_fonts(spec);
 
   SDL_Event e;
 

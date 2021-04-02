@@ -1,16 +1,11 @@
 #include "vterm.hpp"
 
 namespace app {
-VTerm::VTerm(int _rows, int _cols, int pointSize)
-: window(_rows, _cols, pointSize)
+VTerm::VTerm(int _rows, int _cols)
+: window(_rows, _cols)
 {
   cell.fg_col = 0xFFFFFFFF;
   cell.bg_col = 0x000000FF;
-}
-
-void VTerm::resize(int _rows, int _cols, int pointSize) {
-  window.load_fonts(pointSize);
-  resize(_rows, _cols);
 }
 
 void VTerm::resize(int _rows, int _cols) {

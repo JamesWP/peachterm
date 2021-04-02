@@ -3,6 +3,7 @@
 #include <tuple>
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "util.hpp"
 #include "termcell.hpp"
@@ -29,6 +30,15 @@ public:
 
   context(const context &) = delete;
   context &operator=(const context &) = delete;
+};
+
+class FontSpec {
+public:
+  std::string regular;
+  std::string bold;
+  std::string italic;
+  std::string bolditalic;
+  int pointsize;
 };
 
 enum class Direction { UP, DOWN };
@@ -60,14 +70,14 @@ class TermWin {
   int curs_col = 0;
 
 public:
-  TermWin(int rows, int cols, int pointSize);
+  TermWin(int rows, int cols);
   ~TermWin();
 
   TermWin(const TermWin &) = delete;
   TermWin &operator=(const TermWin &) = delete;
 
   void set_scrollback(std::shared_ptr<TermHistory> hist_sp);
-  void load_fonts(int pointSize);
+  void load_fonts(const FontSpec&);
   // resize grid
   void resize_term(int rows, int cols);
   // resize window
