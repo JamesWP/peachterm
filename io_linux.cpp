@@ -2,6 +2,8 @@
 
 #include <chrono>
 #include <iostream>
+#include <string>
+#include <ctype.h>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -10,7 +12,8 @@
 namespace io {
 PseudoTerminal::PseudoTerminal(data_read_cb data_cb)
     : _data_cb(data_cb), write_buffer(1024, '\0'),
-      read_buffer(1024, '\0'), stream{service}, work{service} {}
+      read_buffer(1024, '\0'), stream{service}, work{service}
+      {}
 
 PseudoTerminal::~PseudoTerminal() {
   service.stop();
@@ -41,7 +44,7 @@ void PseudoTerminal::write(const char *data, size_t len) {
   std::cout << "Write pt length= " << len << ": ";
   size_t _len = len;
   for (const char *d = data; _len-- > 0; d++) {
-    if (std::isprint(*d)) {
+    if (::isprint(*d)) {
       std::cout << *d;
     } else {
       std::cout << '\\' << 'x' << std::hex << (int)(*d & 0xFF) << std::dec;
@@ -92,10 +95,10 @@ bool PseudoTerminal::set_size(int rows, int cols) {
   ws.ws_col = cols;
 
   return -1 != ioctl(parentfd, TIOCSWINSZ, &ws);
+  return true;
 }
 
 bool PseudoTerminal::fork_child() {
-
   pid_t p = fork();
   if (p == 0) {
     close(parentfd);
@@ -135,6 +138,8 @@ bool PseudoTerminal::fork_child() {
     return true;
   }
 
-  return false;
+  std::swap(t, thread);
+
+  return true;
 }
 } // namespace io
