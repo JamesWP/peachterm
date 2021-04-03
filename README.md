@@ -66,3 +66,6 @@ Env vars:
 - SDL2DIR=C:\SomePath\SDL2-2.0.14
 - SDL2TTFDIR=C:\SomePath\SDL2_ttf-2.0.15
 - GTEST_ROOT=C:\SomePath\googletest-distribution
+
+
+_n.b. when building gtest from source is it sometimes required to pass '-Dgtest_force_shared_crt=yes' to cmake whn configuring the build_
