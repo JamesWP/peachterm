@@ -67,7 +67,7 @@ static const std::unordered_map<int, char> lore2{
     {SDLK_SPACE, ' '},
 };
 
-std::string_view convert_to_input(SDL_KeyboardEvent *e) {
+std::string_view convert_to_input(SDL_KeyboardEvent *e, Mode mode) {
   static char buffer[32];
 
   SDL_Keymod modifiers = SDL_GetModState();
@@ -96,7 +96,7 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e) {
 
     if (d.second >= 'P' && d.second <= 'S')
       bracket = 'O';
-    if (d.second >= 'A' && d.second <= 'D' && delta == 1)
+    if (d.second >= 'A' && d.second <= 'D' && delta == 1 && mode==Mode::Application)
       bracket = 'O';
 
     if (delta != 1)

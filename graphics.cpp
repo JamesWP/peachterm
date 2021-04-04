@@ -161,7 +161,7 @@ void TermWin::clear_cells(TermCell cell) {
 }
 
 void TermWin::clear_cells(int row, int begin_col, int end_col, TermCell cell) {
-  for (int col = begin_col; col < end_col; col++) {
+  for (int col = begin_col; col < end_col && col < num_cols; col++) {
     set_cell(row, col, cell);
   }
 }
@@ -312,6 +312,7 @@ void TermWin::redraw() {
 void TermWin::move_cursor(int row, int col) {
   curs_row = row;
   curs_col = col;
+  // std::cout << "TermPos " << row << " " << col << " ~ " << num_rows << " " << num_cols << std::endl;
 }
 
 void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {

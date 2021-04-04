@@ -4,10 +4,12 @@
 #include "parser.hpp"
 #include "vterm.hpp"
 #include "io.hpp"
+#include "keyboard.hpp"
 
 namespace app {
 class App : public parser::VTParser, public app::VTerm {
   io::PseudoTerminal *pt_p;
+  keyboard::Mode kMode{keyboard::Mode::Normal};
 
 public:
   App(int rows, int cols, io::PseudoTerminal *pt) : app::VTerm{rows, cols}, pt_p{pt} {}
@@ -35,6 +37,7 @@ public:
   void process_decset(int arg, bool q);
   void process_decrst(int arg, bool q);
   void process_status_report(int arg);
+  keyboard::Mode get_keyboard_mode() const { return kMode; }
 };
 
 void run(const gfx::FontSpec&);
