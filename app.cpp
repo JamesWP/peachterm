@@ -16,11 +16,11 @@ namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-  if (false) {
+  if (getenv("SLOW")) {
     window.redraw();
     SDL_Delay(10);
   }
-  if (true) {
+  if (getenv("WRITE")) {
     std::string_view glyph{data, length};
     std::cout << "Data: " << std::quoted(glyph) << "\n";
   }
