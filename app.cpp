@@ -16,11 +16,11 @@ namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-  if (false) {
+  if (getenv("SLOW")) {
     window.redraw();
     SDL_Delay(10);
   }
-  if (true) {
+  if (getenv("WRITE")) {
     std::string_view glyph{data, length};
     std::cout << "Data: " << std::quoted(glyph) << "\n";
   }
@@ -157,6 +157,11 @@ void App::csi_m(const std::vector<int> &args) {
 
   for (auto i = args.begin(); i != args.end(); i++) {
     int arg = *i;
+
+    if (arg >= 90 && arg <= 107) {
+      arg -= 60;
+    }
+
     bool fg = arg >= 30 && arg < 40;
     uint32_t &colour = fg ? cell.fg_col : cell.bg_col;
 
@@ -216,6 +221,9 @@ void App::process_di() { pt_p->write("\033[65;1;9c"); }
 void App::process_decrst(int arg, bool q) {
   if (q) {
     switch (arg) {
+    case 1:
+      kMode = keyboard::Mode::Normal;
+      break;
     case 3:
       resize(rows, 80);
       break;
@@ -237,6 +245,9 @@ void App::process_decrst(int arg, bool q) {
 void App::process_decset(int arg, bool q) {
   if (q) {
     switch (arg) {
+    case 1:
+      kMode = keyboard::Mode::Application;
+      break;
     case 47:
     case 1047:
     case 1049:
@@ -263,10 +274,10 @@ void App::process_status_report(int arg) {
 }
 
 void App::on_osi(int op, std::string_view data) {
-  switch(op) {
-    case 0: {
-      window.set_window_title(data);
-    } break;
+  switch (op) {
+  case 0: {
+    window.set_window_title(data);
+  } break;
   }
 }
 
@@ -303,7 +314,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'S': scroll_up(ag1(0,1));                         break;
   case 'T': scroll_down(ag1(0,1));                       break;
 
-  case 'X': // -----------------------------------------------;
+  case 'X': window.clear_cells(row, col, ag1(0,1));      break;
   case 'Z': // -----------------------------------------------;
 
   case 'c': process_di();                                break;
@@ -314,6 +325,7 @@ void App::on_csi(char operation, const std::vector<int> &args,
   case 'm': if(args.empty()) csi_m({0}); else csi_m(args); break;
   case 'r': set_scroll_region(ag1(0,1), ag1(1, rows));   break;
   case 's': process_decset(arg(0,0),q);                  break;
+  default: std::cout << "UNKNOWN CSI: " << operation << std::endl;   
   }
   // clang-format on
 
@@ -412,7 +424,8 @@ void run() {
         case SDLK_ESCAPE:
           return;
         default: {
-          pending_input = keyboard::convert_to_input(&e.key);
+          pending_input =
+              keyboard::convert_to_input(&e.key, term.get_keyboard_mode());
         }
         }
       } break;
