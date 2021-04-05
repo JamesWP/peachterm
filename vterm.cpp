@@ -21,10 +21,10 @@ void VTerm::overwriteglyph(const char *input, size_t len) {
 
 void VTerm::start_new_row() {
   // If the next row has put us beyond the scroll region:
-  if (row == scroll_row_end + 1) {
+  if (row == scroll_row_end) {
     // scroll up and start the last line again.
-    window.scroll(scroll_row_begin, scroll_row_end+1, gfx::Direction::UP, 1);
-    row = scroll_row_end;
+    window.scroll(scroll_row_begin, scroll_row_end, gfx::Direction::UP, 1);
+    row = scroll_row_end-1;
   }
 }
 
@@ -38,12 +38,12 @@ void VTerm::delete_lines(int num) {
 
 void VTerm::scroll_up(int num) {
   // scroll [row, scroll_row_end] up num times
-  window.scroll(row, scroll_row_end+1, gfx::Direction::UP, num);
+  window.scroll(row, scroll_row_end, gfx::Direction::UP, num);
 }
 
 void VTerm::scroll_down(int num) {
   // scroll [row, scroll_row_end] down num times
-  window.scroll(row, scroll_row_end+1, gfx::Direction::DOWN, num);
+  window.scroll(row, scroll_row_end, gfx::Direction::DOWN, num);
 }
 
 void VTerm::putglyph(const char *input, size_t len) {

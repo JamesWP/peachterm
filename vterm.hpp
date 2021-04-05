@@ -11,7 +11,7 @@ protected:
 
   // scroll end is one past the end row.
   int scroll_row_begin{0};
-  int scroll_row_end{23};
+  int scroll_row_end{24};
 
   int rows{24};
   int cols{80};
