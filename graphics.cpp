@@ -3,10 +3,10 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include <cassert>
 
 namespace gfx {
 
@@ -55,26 +55,26 @@ TermWin::~TermWin() {
   SDL_DestroyWindow(win);
 }
 
-void TermWin::load_fonts(const FontSpec& spec) {
-  if(fontRegular!=0) {
+void TermWin::load_fonts(const FontSpec &spec) {
+  if (fontRegular != 0) {
     TTF_CloseFont(fontRegular);
   }
   fontRegular = TTF_OpenFont(spec.regular.c_str(), spec.pointsize);
   assert(fontRegular);
 
-  if(fontRegularItalic!=0) {
+  if (fontRegularItalic != 0) {
     TTF_CloseFont(fontRegularItalic);
   }
   fontRegularItalic = TTF_OpenFont(spec.italic.c_str(), spec.pointsize);
   assert(fontRegularItalic);
 
-  if(fontBold!=0) {
+  if (fontBold != 0) {
     TTF_CloseFont(fontBold);
   }
   fontBold = TTF_OpenFont(spec.bold.c_str(), spec.pointsize);
   assert(fontBold);
 
-  if(fontBoldItalic!=0) {
+  if (fontBoldItalic != 0) {
     TTF_CloseFont(fontBoldItalic);
   }
   fontBoldItalic = TTF_OpenFont(spec.bolditalic.c_str(), spec.pointsize);
@@ -92,6 +92,7 @@ void TermWin::load_fonts(const FontSpec& spec) {
 }
 
 void TermWin::resize_term(int rows, int cols) {
+  std::cout << "Size:" << rows << " rows by " << cols << " cols" << std::endl;
   if (tex != nullptr) {
     SDL_DestroyTexture(tex);
     std::cout << "Texture destroyed\n";
@@ -127,11 +128,12 @@ void TermWin::auto_resize_window() {
   SDL_GetWindowSize(win, &window_rect.w, &window_rect.h);
 
   // check if already this size
-  if(window_rect.w == texture_rect.w && window_rect.h == texture_rect.h) {
+  if (window_rect.w == texture_rect.w && window_rect.h == texture_rect.h) {
     return;
   }
 
-  std::cout << "width:" << texture_rect.w << " height:" << texture_rect.h << std::endl;
+  std::cout << "width:" << texture_rect.w << " height:" << texture_rect.h
+            << std::endl;
   SDL_SetWindowSize(win, texture_rect.w, texture_rect.h);
 }
 
@@ -145,7 +147,7 @@ void TermWin::set_cell(int row, int col, TermCell cell) {
 
   const size_t offset = row * num_cols + col;
 
-  if(isNormalScreen) {
+  if (isNormalScreen) {
     normalScreen[offset] = cell;
   } else {
     alternativeScreen[offset] = cell;
@@ -173,7 +175,7 @@ void TermWin::clear_rows(int begin_row, int end_row, TermCell cell) {
 }
 
 void TermWin::insert_cells(int row, int col, int number, TermCell cell) {
-  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
+  auto &cels = isNormalScreen ? normalScreen : alternativeScreen;
   auto begin = cels.begin() + row * num_cols + col;
   auto end = cels.begin() + (row + 1) * num_cols;
   std::rotate(begin, end - number, end);
@@ -181,7 +183,7 @@ void TermWin::insert_cells(int row, int col, int number, TermCell cell) {
 }
 
 void TermWin::delete_cells(int row, int col, int number, TermCell cell) {
-  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
+  auto &cels = isNormalScreen ? normalScreen : alternativeScreen;
   auto begin = cels.begin() + row * num_cols + col;
   auto end = cels.begin() + (row + 1) * num_cols;
   std::rotate(begin, begin + number, end);
@@ -189,14 +191,14 @@ void TermWin::delete_cells(int row, int col, int number, TermCell cell) {
 }
 
 void TermWin::dirty() {
-  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
+  auto &cels = isNormalScreen ? normalScreen : alternativeScreen;
   for (auto &c : cels) {
     c.dirty() = true;
   }
 }
 
 void TermWin::redraw() {
-  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
+  auto &cels = isNormalScreen ? normalScreen : alternativeScreen;
   if (tex == nullptr)
     return;
 
@@ -312,14 +314,14 @@ void TermWin::redraw() {
 void TermWin::move_cursor(int row, int col) {
   curs_row = row;
   curs_col = col;
-  // std::cout << "TermPos " << row << " " << col << " ~ " << num_rows << " " << num_cols << std::endl;
 }
 
+// range is: [begin_row, end_row)
 void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
-  auto& cels = isNormalScreen ? normalScreen : alternativeScreen;
+  auto &cels = isNormalScreen ? normalScreen : alternativeScreen;
 
-  std::cout << "Scrolling rows " << begin_row << " - " << end_row << " ";
-  std::cout << (d == Direction::UP ? "UP" : "DOWN") << " by " << amount << "\n";
+  std::cout << "Scrolling rows [" << begin_row << ", " << end_row << ") "
+            << (d == Direction::UP ? "UP" : "DOWN") << " by " << amount << "\n";
 
   auto row_it = [&](int row) { return cels.begin() + num_cols * row; };
 
@@ -334,9 +336,9 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
     // blank lines are at the end.
     // clear mid - end.
     auto end = row_it(end_row);
-    for (auto b=mid;b!=end; b+=num_cols) {
+    for (auto b = mid; b != end; b += num_cols) {
       if (scrollback) {
-        scrollback->add_row_to_history(b, b+num_cols);
+        scrollback->add_row_to_history(b, b + num_cols);
       }
     }
     for (auto b = mid; b != end; b++) {
@@ -346,9 +348,9 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
     // blank lines are at the start.
     // clear start - mid.
     auto begin = row_it(begin_row);
-    for (auto b=begin;b!=mid; b+=num_cols) {
+    for (auto b = begin; b != mid; b += num_cols) {
       if (scrollback) {
-        scrollback->add_row_to_history(b, b+num_cols);
+        scrollback->add_row_to_history(b, b + num_cols);
       }
     }
     for (auto b = begin; b != mid; b++) {
