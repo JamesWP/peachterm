@@ -353,7 +353,7 @@ size_t strnlen_s(const char *s, size_t len) {
   return 0;
 }
 
-void run(const gfx::FontSpec& spec) {
+void run(const gfx::FontSpec &spec) {
   const uint32_t data_available_event = SDL_RegisterEvents(1);
 
   SDL_Event data_available;
@@ -450,6 +450,11 @@ void run(const gfx::FontSpec& spec) {
       } break;
       case SDL_WINDOWEVENT: {
         switch (e.window.event) {
+        case SDL_WINDOWEVENT_TAKE_FOCUS:
+        case SDL_WINDOWEVENT_EXPOSED: {
+          term.window.dirty();
+          term.window.redraw();
+        } break;
         case SDL_WINDOWEVENT_SIZE_CHANGED: {
           int width = e.window.data1;
           int height = e.window.data2;
@@ -474,7 +479,8 @@ void run(const gfx::FontSpec& spec) {
           if (abs(new_rows - rows) + abs(new_cols - cols) > 1) {
             term.resize(new_rows, new_cols);
             pt.set_size(new_rows, new_cols);
-            std::cout << "Resizing terminal after window sizechange" << std::endl;
+            std::cout << "Resizing terminal after window sizechange"
+                      << std::endl;
           }
         } break;
         }
