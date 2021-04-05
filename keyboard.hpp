@@ -1,7 +1,7 @@
 #pragma once
 #include <string_view>
 
-class SDL_KeyboardEvent;
+struct SDL_KeyboardEvent;
 
 namespace keyboard {
 
