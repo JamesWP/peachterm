@@ -9,6 +9,9 @@ VTerm::VTerm(int _rows, int _cols)
 }
 
 void VTerm::resize(int _rows, int _cols) {
+  if(scroll_row_begin == 0 && scroll_row_end == rows) {
+    scroll_row_end = _rows;
+  }
   rows = _rows;
   cols = _cols;
   window.resize_term(rows, cols);
