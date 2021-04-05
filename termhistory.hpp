@@ -2,13 +2,16 @@
 
 #include <type_traits>
 #include <vector>
+#include <fstream>
 
 #include "termcell.hpp"
 
 class TermHistory {
     std::vector<gfx::TermCell> buff;
+    std::ofstream history_file;
 
 public:
+    TermHistory(std::string filename="history.log");
     template<typename It>
     void add_row_to_history(It lineBegin, It lineEnd);
 
