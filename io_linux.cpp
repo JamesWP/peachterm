@@ -138,8 +138,6 @@ bool PseudoTerminal::fork_child() {
     return true;
   }
 
-  std::swap(t, thread);
-
   return true;
 }
 } // namespace io
