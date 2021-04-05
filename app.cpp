@@ -454,11 +454,11 @@ void run(const gfx::FontSpec& spec) {
           int width = e.window.data1;
           int height = e.window.data2;
 
-          std::cout << "Window resized: " << width << "x" << height
+          std::cout << "Window size changed: " << width << "x" << height
                     << std::endl;
+
           term.window.dirty();
           term.window.redraw();
-
         } break;
         case SDL_WINDOWEVENT_RESIZED: {
           int width = e.window.data1;
@@ -468,9 +468,13 @@ void run(const gfx::FontSpec& spec) {
           int new_cols = width / cell_size.first;
           int new_rows = height / cell_size.second;
 
+          std::cout << "Window resized: " << width << "x" << height
+                    << std::endl;
+
           if (abs(new_rows - rows) + abs(new_cols - cols) > 1) {
             term.resize(new_rows, new_cols);
             pt.set_size(new_rows, new_cols);
+            std::cout << "Resizing terminal after window sizechange" << std::endl;
           }
         } break;
         }
