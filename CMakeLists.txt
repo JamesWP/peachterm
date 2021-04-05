@@ -35,12 +35,12 @@ add_library(jterm
     graphics.cpp 
     app.cpp 
     io_${platform}.cpp 
+    fonts_${platform}.cpp
     parser.cpp 
     keyboard.cpp 
     colors.cpp 
     vterm.cpp 
-    termhistory.cpp 
-    fonts.cpp)
+    termhistory.cpp)
 target_include_directories(jterm PUBLIC ${DEPS_INCLUDE_DIRS} .)
 target_link_libraries(jterm PUBLIC ${DEPS_LIBRARIES})
 target_compile_options(jterm PUBLIC ${EXTRA_CXX_FLAGS})

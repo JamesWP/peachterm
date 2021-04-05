@@ -1,5 +1,6 @@
 #include "fonts.hpp"
 #include <iostream>
+
 #include <fontconfig/fontconfig.h>
 
 namespace fonts {
