@@ -9,6 +9,8 @@
 #include <unicode/brkiter.h>
 #include <unicode/locid.h>
 #include <unicode/utext.h>
+#elif defined(WIN32)
+#include <icu.h>
 #endif
 
 namespace parser {
