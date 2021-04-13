@@ -1,6 +1,7 @@
 #include "fonts.hpp"
 #include <iostream>
 #include <vector>
+#include <SDL.h>
 
 int main(int argc, char *argv[]) {
   (void)argc;
@@ -8,14 +9,11 @@ int main(int argc, char *argv[]) {
 
   auto font_manager = fonts::Manager();
 
-  auto default_font = font_manager.defaultFont();
-  if (default_font) {
-    std::cout << "Listing default font: " << default_font.value() << std::endl;
-  } else {
-    std::cout << "Listing default font: NONE!" << std::endl;
-  }
-
   auto families = font_manager.familyList();
+
+  for(auto& f: families) {
+    std::cout << f << std::endl;
+  }
 
   const std::vector<fonts::Style> styles = {
       fonts::Style::Regular, fonts::Style::RegularItalic, fonts::Style::Bold,
@@ -33,4 +31,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+
+  return 0;
 }

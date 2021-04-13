@@ -369,8 +369,8 @@ void run(const gfx::FontSpec &spec) {
     SDL_PushEvent(&data_available);
   });
 
-  int rows = 24;
-  int cols = 80;
+  int rows = 45;
+  int cols = 120;
 
   std::string pending_input;
 
@@ -386,6 +386,11 @@ void run(const gfx::FontSpec &spec) {
 
   if (!pt.fork_child()) {
     std::cerr << "Fork child failed\n";
+    return;
+  }
+  
+  if (!pt.set_size(rows, cols)) {
+    std::cerr << "Set size failed\n";
     return;
   }
 

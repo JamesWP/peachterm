@@ -14,7 +14,10 @@ int main(int argc, char *argv[]) {
     std::cerr << "Graphics init failed\n";
   }
 
+
+#ifdef __unix
   std::string family = "UbuntuMono";
+
   gfx::FontSpec spec;
   fonts::Manager font_manager;
 
@@ -33,6 +36,18 @@ int main(int argc, char *argv[]) {
   spec.bolditalic = bolditalic.value().path;
   spec.italic = italic.value().path;
   spec.pointsize = 24;
+#endif
+
+#ifdef _WIN32
+  std::string family = "Courier New";
+
+  gfx::FontSpec spec;
+  spec.regular = family + "-R.ttf";
+  spec.bold = family + "-B.ttf";
+  spec.bolditalic = family + "-BI.ttf";
+  spec.italic = family + "-RI.ttf";
+  spec.pointsize = 14;
+#endif
 
   app::run(spec);
 }
