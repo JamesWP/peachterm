@@ -55,7 +55,7 @@ std::vector<std::string> Manager::familyList() {
 }
 
 std::optional<FontDescription> Manager::query(std::optional<std::string> family,
-                                              Style style) {
+                                              Style style, bool load_data) {
   (void)family;
   (void)style;
 

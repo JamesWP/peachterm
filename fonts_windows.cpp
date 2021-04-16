@@ -59,50 +59,29 @@ std::vector<std::string> Manager::familyList() {
 }
 
 std::optional<FontDescription> Manager::query(std::optional<std::string> family,
-                                              Style style) {
-  (void)family;
-  (void)style;
-
-  assert(family.has_value());
-  enum_context ctx;
-
-  ctx.just_the_one_font_actually = true;
-
-  switch (style) {
-  case Style::Regular:
-    ctx.optional_style_filter = std::string("Regular");
-    break;
-  case Style::Bold:
-    ctx.optional_style_filter = std::string("Bold");
-    break;
-  case Style::BoldItalic:
-    ctx.optional_style_filter = std::string("Bold Italic");
-    break;
-  case Style::RegularItalic:
-    ctx.optional_style_filter = std::string("Italic");
-    break;
-  };
-
-  LOGFONT lf;
-  memset(&lf, 0, sizeof(LOGFONT));
-
-  strncpy(lf.lfFaceName, family.value().data(),
-          std::min(family.value().size(), (size_t)LF_FACESIZE));
-  lf.lfCharSet = ANSI_CHARSET;
-
-  HDC hDC = GetDC(NULL);
-
-  EnumFontFamiliesEx(hDC, &lf, (FONTENUMPROCA)EnumFontFamExProc,
-                     reinterpret_cast<LPARAM>(&ctx), 0);
-
-  if (ctx.families_list.size() == 0) {
-    if(style != Style::Regular) {
-      return query(family, Style::Regular);
-    } else {
-      return {};
-    }
+                                              Style style, bool load_data) {
+  auto weight = FW_REGULAR;
+  if (style == Style::Bold || style == Style::BoldItalic) {
+    weight = FW_BOLD;
   }
 
+  auto charset = ANSI_CHARSET;
+
+  auto outprecis = OUT_TT_ONLY_PRECIS;
+
+  auto italic = FALSE;
+  if (style == Style::BoldItalic || style == Style::RegularItalic) {
+    italic = TRUE;
+  }
+
+  auto hfont =
+      CreateFontA(0, 0, 0, 0, weight, italic, 0, 0, charset, outprecis, 0, 0, 0,
+                  family.has_value() ? family.value().data() : nullptr);
+
+  if (hfont == nullptr) {
+    std::cout << "Unable to select font!" << std::endl;
+    return {};
+  }
   // We found a font!
   // DWORD GetFontData(
   //   HDC   hdc,
@@ -111,8 +90,33 @@ std::optional<FontDescription> Manager::query(std::optional<std::string> family,
   //   PVOID pvBuffer,
   //   DWORD cjBuffer
   // );
+  // FontDescription des;
+  // des.family = ctx.families_list.front();
+  // return des;
+
+  HDC hDC = GetDC(NULL);
+
+  SelectObject(hDC, (HGDIOBJ)hfont);
+  //SelectFont(hDC, hfont);
+
   FontDescription des;
-  des.family = ctx.families_list.front();
+  size_t font_data_size = GetFontData(hDC, 0, 0, nullptr, 0);
+  
+  if (font_data_size == GDI_ERROR) {
+    std::cout << "Unable to size font!" << std::endl;
+    return {};
+  }
+  
+
+  des.family.resize(GetTextFace(hDC, 0, nullptr), '\0');
+  GetTextFace(hDC, static_cast<int>(des.family.size()), des.family.data());
+
+  if(load_data) {
+    // std::cout << "Size " << font_data_size << std::endl;
+    des.font_data.resize(font_data_size, '\0');
+    GetFontData(hDC, 0, 0, reinterpret_cast<void*>(des.font_data.data()), static_cast<DWORD>(des.font_data.size()));
+  }
+
   return des;
 }
 } // namespace fonts
@@ -124,7 +128,6 @@ int CALLBACK EnumFontFamExProc(const ENUMLOGFONTEX *lpelfe,
   (void)lpntme;
 
   auto *ctx = (enum_context *)app_pointer;
-  assert(families_list_p);
 
   auto &families_list = ctx->families_list;
 
@@ -136,7 +139,7 @@ int CALLBACK EnumFontFamExProc(const ENUMLOGFONTEX *lpelfe,
                      ctx->optional_style_filter.value().data(),
                      ctx->optional_style_filter.value().size())) {
       // continue enumeration
-      return ctx->just_the_one_font_actually?0:1;
+      return ctx->just_the_one_font_actually ? 0 : 1;
     }
   }
 
@@ -146,6 +149,6 @@ int CALLBACK EnumFontFamExProc(const ENUMLOGFONTEX *lpelfe,
   }
 
   // continue enumeration
-  return ctx->just_the_one_font_actually?0:1;
+  return ctx->just_the_one_font_actually ? 0 : 1;
 }
 } // namespace

@@ -4,17 +4,18 @@
 #include <iomanip>
 #include <optional>
 #include <vector>
+#include <variant>
 
 namespace fonts {
 class FontDescription {
 public:
   std::string family;
-  std::string path;
+  std::string font_data;
 
   friend std::ostream &operator<<(std::ostream &out,
                                   const FontDescription &des) {
     return (out << "Font(" << std::quoted(des.family)
-                << ", path:" << std::quoted(des.path) << ")");
+                << ", size:" << des.font_data.size() << "(bytes))");
   }
 };
 
@@ -25,13 +26,13 @@ std::ostream &operator<<(std::ostream &out, Style s);
 class Manager {
 public:
   std::optional<FontDescription> defaultFont() {
-    return query({}, Style::Regular);
+    return query({}, Style::Regular, true);
   }
 
   std::vector<std::string> familyList();
 
   std::optional<FontDescription> query(std::optional<std::string> family,
-                                       Style);
+                                       Style, bool load_data);
 };
 
 } // namespace fonts

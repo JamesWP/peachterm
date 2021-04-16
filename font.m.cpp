@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
       fonts::Style::BoldItalic};
   for (auto family : families) {
     for (auto style : styles) {
-      auto selected = font_manager.query(family, style);
+      auto selected = font_manager.query(family, style, false);
 
       std::cout << "Family: " << family << "_Style:" << style << " -> ";
 

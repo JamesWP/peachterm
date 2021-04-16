@@ -55,29 +55,35 @@ TermWin::~TermWin() {
   SDL_DestroyWindow(win);
 }
 
+SDL_RWops *RW_FromString(const std::string &data) {
+  return SDL_RWFromConstMem(data.data(), static_cast<int>(data.size()));
+}
+
 void TermWin::load_fonts(const FontSpec &spec) {
   if (fontRegular != 0) {
     TTF_CloseFont(fontRegular);
   }
-  fontRegular = TTF_OpenFont(spec.regular.c_str(), spec.pointsize);
+  fontRegular = TTF_OpenFontRW(RW_FromString(spec.regular), 1, spec.pointsize);
   assert(fontRegular);
 
   if (fontRegularItalic != 0) {
     TTF_CloseFont(fontRegularItalic);
   }
-  fontRegularItalic = TTF_OpenFont(spec.italic.c_str(), spec.pointsize);
+  fontRegularItalic =
+      TTF_OpenFontRW(RW_FromString(spec.italic), 1, spec.pointsize);
   assert(fontRegularItalic);
 
   if (fontBold != 0) {
     TTF_CloseFont(fontBold);
   }
-  fontBold = TTF_OpenFont(spec.bold.c_str(), spec.pointsize);
+  fontBold = TTF_OpenFontRW(RW_FromString(spec.bold), 1, spec.pointsize);
   assert(fontBold);
 
   if (fontBoldItalic != 0) {
     TTF_CloseFont(fontBoldItalic);
   }
-  fontBoldItalic = TTF_OpenFont(spec.bolditalic.c_str(), spec.pointsize);
+  fontBoldItalic =
+      TTF_OpenFontRW(RW_FromString(spec.bolditalic), 1, spec.pointsize);
   assert(fontBoldItalic);
 
   int advance;

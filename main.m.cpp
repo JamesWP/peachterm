@@ -15,39 +15,32 @@ int main(int argc, char *argv[]) {
   }
 
 
-#ifdef __unix
+#ifdef _WIN32
+  std::string family = "Ubuntu Mono";
+#endif
+
+#ifdef _unix
   std::string family = "UbuntuMono";
+#endif
 
   gfx::FontSpec spec;
   fonts::Manager font_manager;
 
-  auto regular = font_manager.query(family, fonts::Style::Regular);
-  auto bold = font_manager.query(family, fonts::Style::Bold);
-  auto bolditalic = font_manager.query(family, fonts::Style::BoldItalic);
-  auto italic = font_manager.query(family, fonts::Style::RegularItalic);
+  auto regular = font_manager.query(family, fonts::Style::Regular, true);
+  auto bold = font_manager.query(family, fonts::Style::Bold, true);
+  auto bolditalic = font_manager.query(family, fonts::Style::BoldItalic, true);
+  auto italic = font_manager.query(family, fonts::Style::RegularItalic, true);
 
   if (!regular || !bold || !bolditalic || !italic) {
     std::cerr << "Unable to load all fonts" << std::endl;
     return 1;
   }
 
-  spec.regular = regular.value().path;
-  spec.bold = bold.value().path;
-  spec.bolditalic = bolditalic.value().path;
-  spec.italic = italic.value().path;
+  spec.regular = regular.value().font_data;
+  spec.bold = bold.value().font_data;
+  spec.bolditalic = bolditalic.value().font_data;
+  spec.italic = italic.value().font_data;
   spec.pointsize = 24;
-#endif
-
-#ifdef _WIN32
-  std::string family = "Courier New";
-
-  gfx::FontSpec spec;
-  spec.regular = family + "-R.ttf";
-  spec.bold = family + "-B.ttf";
-  spec.bolditalic = family + "-BI.ttf";
-  spec.italic = family + "-RI.ttf";
-  spec.pointsize = 14;
-#endif
 
   app::run(spec);
 }
