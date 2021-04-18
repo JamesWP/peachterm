@@ -14,14 +14,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "Graphics init failed\n";
   }
 
-
-#ifdef _WIN32
   std::string family = "Ubuntu Mono";
-#endif
-
-#ifdef _unix
-  std::string family = "UbuntuMono";
-#endif
 
   gfx::FontSpec spec;
   fonts::Manager font_manager;
