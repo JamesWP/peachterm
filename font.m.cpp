@@ -32,5 +32,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  auto selected = font_manager.query("Ubuntu Mono", fonts::Style::Regular, true);
+
   return 0;
 }
