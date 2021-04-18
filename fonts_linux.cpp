@@ -1,5 +1,6 @@
 #include "fonts.hpp"
 #include <iostream>
+#include <fstream>
 
 #include <fontconfig/fontconfig.h>
 
@@ -56,9 +57,6 @@ std::vector<std::string> Manager::familyList() {
 
 std::optional<FontDescription> Manager::query(std::optional<std::string> family,
                                               Style style, bool load_data) {
-  (void)family;
-  (void)style;
-
   FcPattern *pat = FcPatternCreate();
   auto _pat = util::ScopeExit([&]() { FcPatternDestroy(pat); });
 
@@ -105,7 +103,33 @@ std::optional<FontDescription> Manager::query(std::optional<std::string> family,
                                           (FcChar8 **)&file)) {
     return {};
   }
+  
+  FontDescription des;
+  des.family = fullName;
 
-  return FontDescription{fullName, file};
+  if(load_data) {
+    std::ifstream font_file;
+    // open at eof to get size with tellg
+    font_file.open(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
+
+    if(!font_file) {
+      std::cerr << "File: " << file << std::endl;
+      std::cerr << "Unable to open font file" << std::endl;
+      return {};
+    }
+
+    auto font_size = font_file.tellg();
+
+    // rewind to begining
+    font_file.seekg(0);
+
+    auto begin = std::istreambuf_iterator<char>(font_file);
+    auto end = std::istreambuf_iterator<char>{};
+
+    des.font_data.reserve(font_size);
+    des.font_data.assign(begin, end);
+  }
+
+  return des;
 }
 } // namespace fonts
