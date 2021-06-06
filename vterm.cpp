@@ -40,12 +40,12 @@ void VTerm::delete_lines(int num) {
 }
 
 void VTerm::scroll_up(int num) {
-  // scroll [row, scroll_row_end] up num times
+  // scroll [row, scroll_row_end) up num times
   window.scroll(row, scroll_row_end, gfx::Direction::UP, num);
 }
 
 void VTerm::scroll_down(int num) {
-  // scroll [row, scroll_row_end] down num times
+  // scroll [row, scroll_row_end) down num times
   window.scroll(row, scroll_row_end, gfx::Direction::DOWN, num);
 }
 

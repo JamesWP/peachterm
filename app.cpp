@@ -77,8 +77,9 @@ void App::on_ri() {
 
 // TODO: move to vterm
 void App::set_scroll_region(int start_row, int end_row) {
+  //  scroll_row_* are zero based indexes
   scroll_row_begin = start_row - 1;
-  scroll_row_end = end_row - 1;
+  scroll_row_end = end_row; // scroll_row_end is one past end
 }
 
 void App::perform_el(int arg) {
