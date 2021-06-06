@@ -18,6 +18,7 @@ std::ostream &operator<<(std::ostream &out, Style s) {
     return (out << "bold italic");
   default:
     assert(false);
+    return out;
   }
 }
 
