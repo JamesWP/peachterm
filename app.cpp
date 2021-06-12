@@ -12,7 +12,30 @@
 #include <sstream>
 #include <string.h>
 
+constexpr int user_event_code_stat = 123;
+constexpr int user_event_child_data = 124;
+
+namespace {
+Uint32 stat_callback(Uint32 interval, void *) {
+  std::cout << "Timer callback called\n";
+  SDL_Event event;
+  SDL_UserEvent userevent;
+
+  userevent.type = SDL_USEREVENT;
+  userevent.code = user_event_code_stat;
+  userevent.data1 = NULL;
+  userevent.data2 = NULL;
+
+  event.type = SDL_USEREVENT;
+  event.user = userevent;
+
+  SDL_PushEvent(&event);
+  return interval;
+}
+} // namespace
+
 namespace app {
+
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
@@ -355,11 +378,10 @@ size_t strnlen_s(const char *s, size_t len) {
 }
 
 void run(const gfx::FontSpec &spec) {
-  const uint32_t data_available_event = SDL_RegisterEvents(1);
-
   SDL_Event data_available;
   SDL_memset(&data_available, 0, sizeof(data_available));
-  data_available.type = data_available_event;
+  data_available.type = SDL_USEREVENT;
+  data_available.user.code = user_event_child_data;
 
   std::cout << "PT run\n";
 
@@ -389,7 +411,7 @@ void run(const gfx::FontSpec &spec) {
     std::cerr << "Fork child failed\n";
     return;
   }
-  
+
   if (!pt.set_size(rows, cols)) {
     std::cerr << "Set size failed\n";
     return;
@@ -407,22 +429,11 @@ void run(const gfx::FontSpec &spec) {
 
   SDL_Event e;
 
+  // Set callback
+  SDL_TimerID timerID = SDL_AddTimer(3 * 1000, stat_callback, &term);
+
   while (true) {
     while (SDL_PollEvent(&e) != 0) {
-      if (e.type == data_available_event) {
-        std::cout << "SDL Child Data Event\n";
-        const char *data = static_cast<const char *>(e.user.data1);
-        size_t len = reinterpret_cast<size_t>(e.user.data2);
-
-        if (data == nullptr && len == 0u) {
-          return;
-        }
-
-        term.parse_input(data, len);
-        term.window.redraw();
-        pt.read_complete();
-        continue;
-      }
       switch (e.type) {
       case SDL_QUIT:
         return;
@@ -491,11 +502,42 @@ void run(const gfx::FontSpec &spec) {
         } break;
         }
       } break;
+      case SDL_USEREVENT: {
+        std::cout << "User event\n";
+        switch (e.user.code) {
+        case user_event_code_stat: {
+          std::cout << "Stat event\n";
+          term.window.stat_callback();
+        } break;
+        case user_event_child_data: {
+          std::cout << "SDL Child Data Event\n";
+          const char *data = static_cast<const char *>(e.user.data1);
+          size_t len = reinterpret_cast<size_t>(e.user.data2);
+
+          if (data == nullptr && len == 0u) {
+            return;
+          }
+
+          term.parse_input(data, len);
+          term.window.redraw();
+          pt.read_complete();
+          continue;
+        }
+
+        default: {
+          std::cout << "Unknown user event code: " << e.user.code << "\n";
+        }
+        }
+      } break;
       default: {
       }
-      }
-    }
+      } // event type switch
+    }   // while poll event
     SDL_Delay(10);
-  }
+  } // while true
+
+  // TODO: this not reached, the above code 'returns' instead of exiting the
+  // loop
+  SDL_RemoveTimer(timerID);
 }
 } // namespace app

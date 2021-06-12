@@ -88,4 +88,8 @@ TTF_Font *TextRenderer::get_font(bool bold, bool italic) const {
 std::pair<int, int> TextRenderer::cell_size() const {
     return {cell_width, cell_height};
 }
+void TextRenderer::dump_cache_stats() const {
+    std::cout << "Cell cache stats: hits:" << cache_hits << " misses:" << cache_misses << "\n";
+    std::cout << "Cell cache stats: efficiency:"  << std::setprecision(2) << static_cast<float>(cache_hits) / (cache_misses + cache_hits) << "\n";
+}
 } // namespace gfx

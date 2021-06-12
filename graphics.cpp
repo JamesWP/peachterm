@@ -323,4 +323,7 @@ void TermWin::set_window_title(std::string_view data) {
   SDL_SetWindowTitle(win, data.data());
 }
 
+void TermWin::stat_callback() {
+  tRender.dump_cache_stats();
+}
 } // namespace gfx

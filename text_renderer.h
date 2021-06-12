@@ -21,6 +21,10 @@ class TextRenderer {
   TTF_Font *fontBold = nullptr;
   TTF_Font *fontBoldItalic = nullptr;
 
+
+  int cache_hits = 0;
+  int cache_misses = 0;
+
 public:
   int cell_width = 6;
   int cell_height = 12;
@@ -30,6 +34,7 @@ public:
   void load_fonts(const FontSpec &);
   TTF_Font *get_font(bool bold = false, bool italic = false) const;
   std::pair<int, int> cell_size() const;
+  void dump_cache_stats() const;
   ~TextRenderer();
 };
 } // namespace gfx
