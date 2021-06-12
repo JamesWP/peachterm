@@ -485,8 +485,8 @@ void run(const gfx::FontSpec &spec) {
           if (abs(new_rows - rows) + abs(new_cols - cols) > 1) {
             term.resize(new_rows, new_cols);
             pt.set_size(new_rows, new_cols);
-            std::cout << "Resizing terminal after window sizechange"
-                      << std::endl;
+            std::cout << "Resizing terminal to (" << new_rows << "x "
+                      << new_cols << ") after window sizechange" << std::endl;
           }
         } break;
         }
