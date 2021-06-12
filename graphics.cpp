@@ -54,7 +54,7 @@ TermWin::~TermWin() {
 }
 
 void TermWin::load_fonts(const FontSpec &spec) {
-  tRender.load_fonts(spec);
+  tRender.load_fonts(ren, spec);
 }
 
 void TermWin::resize_term(int rows, int cols) {
@@ -195,13 +195,6 @@ void TermWin::redraw() {
       bool is_cursor = row == curs_row && col == curs_col;
       int curs_height = 2;
 
-      // Rectangle for the cell.
-      SDL_Rect cell_rect;
-      cell_rect.w = tRender.cell_width;
-      cell_rect.h = tRender.cell_height;
-      cell_rect.x = cell_left_x;
-      cell_rect.y = cell_top_y;
-
       // Rectangle for the cursor.
       SDL_Rect curs_rect;
       curs_rect.w = tRender.cell_width;
@@ -222,24 +215,7 @@ void TermWin::redraw() {
         std::swap(fg, bg);
       }
 
-      // Clear cursor.
-      SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
-      SDL_RenderFillRect(ren, &curs_rect);
-
-      if (font) {
-        // Begin draw character.
-        SDL_Surface *cellSurf = TTF_RenderUTF8_Blended(font, glyph, fg);
-        SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
-
-        // Read back the size of the character
-        SDL_QueryTexture(cellTex, nullptr, nullptr, &cell_rect.w, &cell_rect.h);
-
-        SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
-        SDL_RenderFillRect(ren, &cell_rect);
-        SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
-        SDL_DestroyTexture(cellTex);
-        SDL_FreeSurface(cellSurf);
-      }
+      tRender.draw_character(ren, font, glyph, fg, bg, cell_top_y, cell_left_x);
 
       if (is_cursor) {
         // Begin draw cursor.
