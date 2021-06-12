@@ -80,8 +80,6 @@ void TermWin::resize_term(int rows, int cols) {
             << "\n";
 
   clear_cells();
-
-  redraw();
 }
 
 void TermWin::auto_resize_window() {

@@ -15,6 +15,7 @@ void VTerm::resize(int _rows, int _cols) {
   rows = _rows;
   cols = _cols;
   window.resize_term(rows, cols);
+  window.redraw();
 }
 
 void VTerm::overwriteglyph(const char *input, size_t len) {
