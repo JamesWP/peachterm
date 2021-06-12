@@ -26,8 +26,8 @@ context::~context() {
 }
 
 TermWin::TermWin(int rows = 24, int cols = 80) {
-  const int window_width = cols * cell_width;
-  const int window_height = rows * cell_height;
+  const int window_width = cols * tRender.cell_width;
+  const int window_height = rows * tRender.cell_height;
 
   win = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED,
                          SDL_WINDOWPOS_UNDEFINED, window_width, window_height,
@@ -47,54 +47,14 @@ TermWin::~TermWin() {
     SDL_DestroyTexture(tex);
     std::cout << "Texture destroyed\n";
   }
-  std::cout << "Font destroyed\n";
-  TTF_CloseFont(fontRegular);
   std::cout << "Renderer destroyed\n";
   SDL_DestroyRenderer(ren);
   std::cout << "Window destroyed\n";
   SDL_DestroyWindow(win);
 }
 
-SDL_RWops *RW_FromString(const std::string &data) {
-  return SDL_RWFromConstMem(data.data(), static_cast<int>(data.size()));
-}
-
 void TermWin::load_fonts(const FontSpec &spec) {
-  if (fontRegular != 0) {
-    TTF_CloseFont(fontRegular);
-  }
-  fontRegular = TTF_OpenFontRW(RW_FromString(spec.regular), 1, spec.pointsize);
-  assert(fontRegular);
-
-  if (fontRegularItalic != 0) {
-    TTF_CloseFont(fontRegularItalic);
-  }
-  fontRegularItalic =
-      TTF_OpenFontRW(RW_FromString(spec.italic), 1, spec.pointsize);
-  assert(fontRegularItalic);
-
-  if (fontBold != 0) {
-    TTF_CloseFont(fontBold);
-  }
-  fontBold = TTF_OpenFontRW(RW_FromString(spec.bold), 1, spec.pointsize);
-  assert(fontBold);
-
-  if (fontBoldItalic != 0) {
-    TTF_CloseFont(fontBoldItalic);
-  }
-  fontBoldItalic =
-      TTF_OpenFontRW(RW_FromString(spec.bolditalic), 1, spec.pointsize);
-  assert(fontBoldItalic);
-
-  int advance;
-  TTF_GlyphMetrics(fontRegular, '&', nullptr, nullptr, nullptr, nullptr,
-                   &advance);
-
-  font_height = TTF_FontHeight(fontRegular);
-
-  cell_height = font_height;
-  cell_width = advance;
-  font_point = spec.pointsize;
+  tRender.load_fonts(spec);
 }
 
 void TermWin::resize_term(int rows, int cols) {
@@ -107,8 +67,8 @@ void TermWin::resize_term(int rows, int cols) {
   num_rows = rows;
   num_cols = cols;
 
-  const int tex_width = num_cols * cell_width;
-  const int tex_height = num_rows * cell_height;
+  const int tex_width = num_cols * tRender.cell_width;
+  const int tex_height = num_rows * tRender.cell_height;
 
   normalScreen.resize(num_rows * num_cols);
   alternativeScreen.resize(num_rows * num_cols);
@@ -216,8 +176,8 @@ void TermWin::redraw() {
       int offset = row * num_cols + col;
       const TermCell &cell = cels[offset].value();
       bool dirty = cels[offset].dirty();
-      int cell_top_y = row * cell_height;
-      int cell_left_x = col * cell_width;
+      int cell_top_y = row * tRender.cell_height;
+      int cell_left_x = col * tRender.cell_width;
 
       // Cell content.
       const char *glyph = cell.glyph.c_str();
@@ -239,28 +199,20 @@ void TermWin::redraw() {
 
       // Rectangle for the cell.
       SDL_Rect cell_rect;
-      cell_rect.w = cell_width;
-      cell_rect.h = cell_height;
+      cell_rect.w = tRender.cell_width;
+      cell_rect.h = tRender.cell_height;
       cell_rect.x = cell_left_x;
       cell_rect.y = cell_top_y;
 
       // Rectangle for the cursor.
       SDL_Rect curs_rect;
-      curs_rect.w = cell_width;
+      curs_rect.w = tRender.cell_width;
       curs_rect.h = curs_height;
       curs_rect.x = cell_left_x;
-      curs_rect.y = cell_top_y + cell_height - curs_height;
+      curs_rect.y = cell_top_y + tRender.cell_height - curs_height;
 
       // Cell font;
-      TTF_Font *font = nullptr;
-      if (!cell.bold && !cell.italic)
-        font = fontRegular;
-      if (!cell.bold && cell.italic)
-        font = fontRegularItalic;
-      if (cell.bold && !cell.italic)
-        font = fontBold;
-      if (cell.bold && cell.italic)
-        font = fontBoldItalic;
+      TTF_Font *font = tRender.get_font(cell.bold, cell.italic);
 
       // And now, actual drawing.
 
@@ -366,7 +318,7 @@ void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
 }
 
 std::pair<int, int> TermWin::cell_size() const {
-  return {cell_width, cell_height};
+  return tRender.cell_size();
 }
 
 void TermWin::set_window_title(std::string_view data) {

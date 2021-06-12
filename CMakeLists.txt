@@ -40,7 +40,8 @@ add_library(jterm
     keyboard.cpp 
     colors.cpp 
     vterm.cpp 
-    termhistory.cpp)
+    termhistory.cpp
+    text_renderer.cpp)
 target_include_directories(jterm PUBLIC ${DEPS_INCLUDE_DIRS} .)
 target_link_libraries(jterm PUBLIC ${DEPS_LIBRARIES})
 target_compile_options(jterm PUBLIC ${EXTRA_CXX_FLAGS})

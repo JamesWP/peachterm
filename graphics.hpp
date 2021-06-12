@@ -8,6 +8,7 @@
 #include "util.hpp"
 #include "termcell.hpp"
 #include "termhistory.hpp"
+#include "text_renderer.h"
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -32,15 +33,6 @@ public:
   context &operator=(const context &) = delete;
 };
 
-class FontSpec {
-public:
-  std::string regular;
-  std::string bold;
-  std::string italic;
-  std::string bolditalic;
-  int pointsize;
-};
-
 enum class Direction { UP, DOWN };
 
 class TermWin {
@@ -48,10 +40,7 @@ class TermWin {
   SDL_Renderer *ren = nullptr;
   SDL_Texture *tex = nullptr;
 
-  TTF_Font *fontRegular = nullptr;
-  TTF_Font *fontRegularItalic = nullptr;
-  TTF_Font *fontBold = nullptr;
-  TTF_Font *fontBoldItalic = nullptr;
+  TextRenderer tRender;
 
   bool isNormalScreen = true;
 
@@ -62,10 +51,7 @@ class TermWin {
 
   int num_rows;
   int num_cols;
-  int cell_width = 6;
-  int cell_height = 12;
-  int font_height = 12;
-  int font_point = 14;
+
   int curs_row = 0;
   int curs_col = 0;
 
