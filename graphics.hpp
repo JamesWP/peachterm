@@ -83,6 +83,7 @@ public:
   std::pair<int, int> cell_size() const;
   void set_window_title(std::string_view);
   void stat_callback();
+  void dump_state_callback();
 };
 
 inline bool& TermWin::screen_mode_normal() { return isNormalScreen; }

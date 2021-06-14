@@ -1,12 +1,10 @@
 #pragma once
+#include <SDL.h>
+#include <SDL_ttf.h>
+#include <list>
 #include <string>
 #include <string_view>
-
-struct _TTF_Font;
-struct SDL_Renderer;
-struct SDL_Color;
-struct SDL_Texture;
-typedef _TTF_Font TTF_Font;
+#include <unordered_map>
 
 namespace gfx {
 
@@ -19,6 +17,16 @@ public:
   int pointsize;
 };
 
+using CellCacheKey = std::tuple<TTF_Font *, SDL_Color, SDL_Color, std::string>;
+
+struct cell_cache_key_hash {
+  size_t operator()(CellCacheKey const &p) const;
+};
+
+using CacheList = std::list<std::pair<CellCacheKey, int>>;
+using CacheMap =
+    std::unordered_map<CellCacheKey, CacheList::iterator, cell_cache_key_hash>;
+
 class TextRenderer {
   TTF_Font *fontRegular = nullptr;
   TTF_Font *fontRegularItalic = nullptr;
@@ -26,12 +34,15 @@ class TextRenderer {
   TTF_Font *fontBoldItalic = nullptr;
 
   // Cell cache
-  static constexpr int cache_width_cells = 16;  // cache size in cells
-  static constexpr int cache_height_cells = 16; // cache size in cells
+  static constexpr int cache_width_cells = 48;  // cache size in cells
+  static constexpr int cache_height_cells = 48; // cache size in cells
   SDL_Texture *cacheTex = nullptr;
 
   int cache_hits = 0;
   int cache_misses = 0;
+
+  CacheList lru_list;
+  CacheMap lru_map;
 
 public:
   int cell_width = 6;
@@ -45,12 +56,15 @@ public:
   void draw_character(SDL_Renderer *ren, TTF_Font *font, std::string_view glyph,
                       const SDL_Color &fg, const SDL_Color &bg, int top,
                       int left);
-  void dump_cache_stats() const;
+  void dump_cache_stats();
+  void dump_cache_to_disk(SDL_Renderer *ren) const;
   ~TextRenderer();
 
 private:
-  int get_cache_location(TTF_Font *font, std::string_view glyph, SDL_Color fg,
-                         SDL_Color bg);
-  bool cache_populated(int cache_location);
+  // returns the (possibley new) cache location of the item.
+  // {index_location, is_empty}
+  std::pair<int, bool> get_cache_location(TTF_Font *font,
+                                          std::string_view glyph, SDL_Color fg,
+                                          SDL_Color bg);
 };
 } // namespace gfx

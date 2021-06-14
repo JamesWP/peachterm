@@ -302,4 +302,8 @@ void TermWin::set_window_title(std::string_view data) {
 void TermWin::stat_callback() {
   tRender.dump_cache_stats();
 }
+
+void TermWin::dump_state_callback() {
+  tRender.dump_cache_to_disk(ren);
+}
 } // namespace gfx

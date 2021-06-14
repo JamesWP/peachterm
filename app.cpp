@@ -440,7 +440,13 @@ void run(const gfx::FontSpec &spec) {
       case SDL_KEYDOWN: {
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
-          return;
+          if(e.key.keysym.mod & SDLK_LSHIFT) {
+            std::cout << "Dump state\n";
+            term.window.dump_state_callback();
+          } else {
+            return;
+          }
+          break;
         default: {
           pending_input =
               keyboard::convert_to_input(&e.key, term.get_keyboard_mode());
