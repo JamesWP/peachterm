@@ -1,5 +1,5 @@
 bld
 build
-build-release
+build-*
 .vscode
 history.log
