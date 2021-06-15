@@ -1,0 +1,19 @@
+
+window thing - SDL graphics layer
+------------
+height px
+width px
+------------
+render(region) -> render(line, painter()) x<each line>
+||
+lines thing - Text terminal layer
+-----------
+number of lines (all history + active region)
+width in chars
+vterm
+history_file
+----------- - storage layer
+get_line(line_no) -> line data
+||
+[history file] scrollback(line_no) -> &line data
+[vterm]        active region(line_no) -> &line data

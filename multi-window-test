@@ -1,0 +1,24 @@
+main window
+debug window
+
+main renderer
+debug renderer
+
+main renderer -> cache texture
+
+render into cache texture
+
+draw() ->
+    blank screen
+    draw background
+    draw part of cache texture to new location
+    draw shape
+    done
+
+
+debug renderer
+draw() ->
+    blank screen
+    draw background
+    draw all cache texture to screen
+    done
