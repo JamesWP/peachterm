@@ -209,7 +209,7 @@ std::pair<int, bool> TextRenderer::get_cache_location(TTF_Font *font, std::strin
     // mark entry as recently used
     lru_list.erase(list_it);
     lru_list.push_front(list_item);
-    lru_map.insert(std::make_pair(map_key, lru_list.begin()));
+    lru_map[map_key] = lru_list.begin();
 
     return {list_item.second, true};
   }
@@ -229,7 +229,7 @@ std::pair<int, bool> TextRenderer::get_cache_location(TTF_Font *font, std::strin
 
   // Emplace new item in cache using newly freed index
   lru_list.push_front(std::make_pair(map_key, oldest_index));
-  lru_map.insert(std::make_pair(map_key, lru_list.begin()));
+  lru_map[map_key] = lru_list.begin();
 
   return {oldest_index, false};
 }
