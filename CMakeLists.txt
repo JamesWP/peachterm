@@ -29,6 +29,11 @@ if(MSVC)
 set(EXTRA_CXX_FLAGS /WX /W4 -D _CRT_SECURE_NO_WARNINGS)
 else()
 set(EXTRA_CXX_FLAGS -Wall -Wextra -Werror)
+
+if(PEACHTERM_ENABLE_ASAN)
+    set(EXTRA_CXX_FLAGS ${EXTRA_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer)
+    set(EXTRA_LDD_FLAGS ${EXTRA_LDD_FLAGS} -fsanitize=address)
+endif()
 endif()
 
 add_library(jterm 
@@ -43,6 +48,7 @@ add_library(jterm
     termhistory.cpp
     text_renderer.cpp)
 target_include_directories(jterm PUBLIC ${DEPS_INCLUDE_DIRS} .)
+target_link_options(jterm BEFORE PUBLIC ${EXTRA_LDD_FLAGS})
 target_link_libraries(jterm PUBLIC ${DEPS_LIBRARIES})
 target_compile_options(jterm PUBLIC ${EXTRA_CXX_FLAGS})
 target_compile_features(jterm PUBLIC cxx_std_17)
