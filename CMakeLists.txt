@@ -89,3 +89,10 @@ add_test(NAME util-unit-tests COMMAND util-main)
 
 add_executable(font-main font.m.cpp)
 target_link_libraries(font-main PRIVATE jterm)
+
+add_executable(test-textures textures.m.cpp)
+target_include_directories(test-textures PUBLIC ${DEPS_INCLUDE_DIRS} .)
+target_link_options(test-textures BEFORE PUBLIC ${EXTRA_LDD_FLAGS})
+target_link_libraries(test-textures PUBLIC ${DEPS_LIBRARIES})
+target_compile_options(test-textures PUBLIC ${EXTRA_CXX_FLAGS})
+target_compile_features(test-textures PUBLIC cxx_std_17)
