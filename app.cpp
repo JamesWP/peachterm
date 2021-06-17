@@ -434,18 +434,8 @@ void run(const gfx::FontSpec &spec) {
     return;
   }
 
-  if (!pt.set_size(rows, cols)) {
-    std::cerr << "Set size failed\n";
-    return;
-  }
-
   if (!pt.fork_child()) {
     std::cerr << "Fork child failed\n";
-    return;
-  }
-
-  if (!pt.set_size(rows, cols)) {
-    std::cerr << "Set size failed\n";
     return;
   }
 
@@ -458,6 +448,9 @@ void run(const gfx::FontSpec &spec) {
   term.window.set_scrollback(hist);
 
   term.window.load_fonts(spec);
+
+  term.resize(rows, cols);
+  pt.set_size(rows, cols);
 
   SDL_Event e;
 
