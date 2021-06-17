@@ -8,16 +8,18 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf fontconfig icu-uc)
 
 set(DEPS_LIBRARIES ${DEPS_LIBRARIES} pthread boost_system)
+SET(DEPS_GTEST_LIBRARIES gtest gmock gtest_main)
 set(platform linux)
 endif(UNIX)
 
 if(WIN32)
-find_package(SDL2 REQUIRED)
-find_package(SDL2_TTF REQUIRED)
-find_package(GTest REQUIRED)
+find_package(SDL2 CONFIG REQUIRED)
+find_package(sdl2-ttf CONFIG REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 
-set(DEPS_INCLUDE_DIRS ${SDL2_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR})
-set(DEPS_LIBRARIES ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARY} icuuc icuin)
+set(DEPS_INCLUDE_DIRS "")
+set(DEPS_LIBRARIES SDL2::SDL2 SDL2::SDL2main SDL2::SDL2_ttf icuuc icuin)
+SET(DEPS_GTEST_LIBRARIES GTest::gmock GTest::gtest GTest::gmock_main GTest::gtest_main)
 set(platform windows)
 endif(WIN32)
 
@@ -60,11 +62,11 @@ add_executable(io-main io.m.cpp)
 target_link_libraries(io-main PRIVATE jterm)
 
 add_executable(parser-main parser.m.cpp)
-target_link_libraries(parser-main PRIVATE jterm gtest gmock gtest_main)
+target_link_libraries(parser-main PRIVATE jterm ${DEPS_GTEST_LIBRARIES})
 add_test(NAME parser-unit-tests COMMAND parser-main)
 
 add_executable(util-main util.m.cpp)
-target_link_libraries(util-main PRIVATE jterm gtest gmock gtest_main)
+target_link_libraries(util-main PRIVATE jterm ${DEPS_GTEST_LIBRARIES})
 add_test(NAME util-unit-tests COMMAND util-main)
 
 add_executable(font-main font.m.cpp)
