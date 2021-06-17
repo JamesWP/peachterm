@@ -15,6 +15,8 @@ struct SDL_Texture;
 struct _TTF_Font;
 struct SDL_PixelFormat;
 
+class CellRenderCache;
+
 typedef _TTF_Font TTF_Font;
 
 namespace gfx {
@@ -68,6 +70,8 @@ class TermWin {
   int font_point = 14;
   int curs_row = 0;
   int curs_col = 0;
+
+  std::unique_ptr<CellRenderCache> render_cache;
 
 public:
   TermWin(int rows, int cols);

@@ -10,6 +10,25 @@
 
 namespace gfx {
 
+
+class CellRenderCache {
+};
+
+class CellSurf {
+  SDL_Rect metrics;
+  SDL_Surface *surf;
+  SDL_Texture *texture;
+  bool should_destruct;
+
+public:
+  ~CellSurf() {
+    if (should_destruct) {
+        SDL_DestroyTexture(texture);
+        SDL_FreeSurface(surf);
+    }
+  }
+};
+
 context::context() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     d_error = true;
@@ -287,8 +306,8 @@ void TermWin::redraw() {
         SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 0xFF);
         SDL_RenderFillRect(ren, &cell_rect);
         SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
-        SDL_DestroyTexture(cellTex);
-        SDL_FreeSurface(cellSurf);
+        //SDL_DestroyTexture(cellTex);
+        //SDL_FreeSurface(cellSurf);
       }
 
       if (is_cursor) {
@@ -315,6 +334,20 @@ void TermWin::redraw() {
   SDL_RenderCopy(ren, tex, &texture_rect, &texture_rect);
 
   SDL_RenderPresent(ren);
+}
+
+CellSurf TermWin::get_cell_surface(SDL_Font *font, SDL_Color fg, const std::string& glyph) { 
+    CellSurf surf;
+
+    if (cache_hit) {
+      return surf;
+    }
+
+    if (do_cache) {
+      // insert into cache
+    }
+
+    return surf;
 }
 
 void TermWin::move_cursor(int row, int col) {
