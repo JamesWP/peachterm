@@ -27,6 +27,7 @@ TermHistory::TermHistory(std::string filename) {
 void TermHistory::start_row() { buff.clear(); }
 
 void TermHistory::finish_row() {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "Row is history  =|";
   for (auto &c : buff) {
     if (c.glyph.size() != 1) {
@@ -38,6 +39,7 @@ void TermHistory::finish_row() {
     std::cout << c.glyph;
   }
   std::cout << std::endl;
+#endif
 
   if (!history_file) {
     return;
@@ -56,8 +58,10 @@ void TermHistory::finish_row() {
     trim++;
   }
 
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "History line: " << buff.size() << std::endl;
   std::cout << "History line post-trim: " << buff.size() - trim << std::endl;
+#endif
 
   for (size_t i = 0; i < buff.size() - trim; ++i) {
     history_file.write(buff[i].glyph.data(), buff[i].glyph.size());

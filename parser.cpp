@@ -188,6 +188,7 @@ void VTParser::dispatch_csi(const char *data, size_t length) {
     }
   }
 
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "CSI (" << operation << ") ";
 
   std::cout << "(";
@@ -203,6 +204,7 @@ void VTParser::dispatch_csi(const char *data, size_t length) {
   std::cout << " : '";
   std::cout.write(data, length);
   std::cout << "'\n";
+#endif
 
   on_csi(operation, args, options);
 }

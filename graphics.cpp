@@ -252,8 +252,10 @@ void TermWin::move_cursor(int row, int col) {
 void TermWin::scroll(int begin_row, int end_row, Direction d, int amount) {
   auto &cels = isNormalScreen ? normalScreen : alternativeScreen;
 
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "Scrolling rows [" << begin_row << ", " << end_row << ") "
             << (d == Direction::UP ? "UP" : "DOWN") << " by " << amount << "\n";
+#endif
 
   auto row_it = [&](int row) { return cels.begin() + num_cols * row; };
 

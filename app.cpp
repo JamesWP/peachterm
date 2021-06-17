@@ -40,30 +40,38 @@ namespace app {
 void App::on_glyph(const char *data, size_t length) {
   putglyph(data, length);
   window.move_cursor(row, col);
-  if (getenv("SLOW")) {
-    window.redraw();
-    SDL_Delay(10);
-  }
-  if (getenv("WRITE")) {
-    std::string_view glyph{data, length};
-    std::cout << "Data: " << std::quoted(glyph) << "\n";
-  }
+
+#ifdef PEACHTERM_IS_SLOMO
+  window.redraw();
+  SDL_Delay(10);
+#endif
+
+#ifdef PEACHTERM_IS_VERY_VERBOSE
+  std::string_view glyph{data, length};
+  std::cout << "Data: " << std::quoted(glyph) << "\n";
+#endif
 }
 
 void App::on_backspace() {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "on_backspace\n";
+#endif
   curs_backspace();
   window.move_cursor(row, col);
 }
 
 void App::on_newline() {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "on_newline\n";
+#endif
   curs_newline();
   window.move_cursor(row, col);
 }
 
 void App::on_return() {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "on_return\n";
+#endif
   curs_to_col(0);
   window.move_cursor(row, col);
 }
@@ -73,7 +81,9 @@ int tab_stop(int start, int num_stops) {
 }
 
 void App::on_tab() {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "on_tab\n";
+#endif
   curs_to_col(tab_stop(col, 1));
   window.move_cursor(row, col);
 }
@@ -259,7 +269,7 @@ void App::csi_m(const std::vector<int> &args) {
             extended_colour = parse_extended_colour(i);
             if(extended_colour) {
               colour = *extended_colour;
-            break;
+              break;
             } else {
               return;
             }
@@ -480,7 +490,9 @@ void run(const gfx::FontSpec &spec) {
       } break;
       case SDL_KEYUP: {
         if (!pending_input.empty()) {
+#ifdef PEACHTERM_IS_VERBOSE
           std::cout << "SDL Keypress\n";
+#endif
           pt.write(pending_input);
           pending_input.clear();
         }
@@ -534,14 +546,18 @@ void run(const gfx::FontSpec &spec) {
         }
       } break;
       case SDL_USEREVENT: {
+#ifdef PEACHTERM_IS_VERBOSE
         std::cout << "User event\n";
+#endif
         switch (e.user.code) {
         case user_event_code_stat: {
           std::cout << "Stat event\n";
           term.window.stat_callback();
         } break;
         case user_event_child_data: {
+#ifdef PEACHTERM_IS_VERBOSE
           std::cout << "SDL Child Data Event\n";
+#endif
           const char *data = static_cast<const char *>(e.user.data1);
           size_t len = reinterpret_cast<size_t>(e.user.data2);
 

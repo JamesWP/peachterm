@@ -3,6 +3,7 @@ project(jterm)
 
 enable_testing()
 
+# Build dependencies
 if(UNIX)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEPS REQUIRED sdl2 SDL2_ttf fontconfig icu-uc)
@@ -26,7 +27,12 @@ endif(WIN32)
 message(STATUS "linking: " ${DEPS_LIBRARIES})
 message(STATUS "including: " ${DEPS_INCLUDE_DIRS})
 
-# Flags ----------------
+# Build options
+option(PEACHTERM_IS_VERBOSE "Build project with extra debugging info printed to stdout")
+option(PEACHTERM_IS_VERY_VERBOSE "Build project with extra extra debugging info printed to stdout")
+option(PEACHTERM_IS_SLOMO "Build project so each character is printed seperately")
+
+# Compiler Flags 
 if(MSVC)
 set(EXTRA_CXX_FLAGS /WX /W4 -D _CRT_SECURE_NO_WARNINGS)
 else()
@@ -36,6 +42,18 @@ if(PEACHTERM_ENABLE_ASAN)
     set(EXTRA_CXX_FLAGS ${EXTRA_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer)
     set(EXTRA_LDD_FLAGS ${EXTRA_LDD_FLAGS} -fsanitize=address)
 endif()
+endif()
+
+if(PEACHTERM_IS_VERBOSE)
+add_compile_definitions(PEACHTERM_IS_VERBOSE)
+endif()
+
+if(PEACHTERM_IS_VERY_VERBOSE)
+add_compile_definitions(PEACHTERM_IS_VERY_VERBOSE)
+endif()
+
+if(PEACHTERM_IS_SLOMO)
+add_compile_definitions(PEACHTERM_IS_SLOMO)
 endif()
 
 add_library(jterm 

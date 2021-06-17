@@ -38,7 +38,9 @@ PseudoTerminal::~PseudoTerminal() {
 }
 
 void PseudoTerminal::read_complete() {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "Read complete" << std::endl;
+#endif
   {
     std::unique_lock<std::mutex> lk(read_data_state);
     buffer_ready_for_write = true;
@@ -142,12 +144,15 @@ bool PseudoTerminal::fork_child() {
     do {
       // Wait for buffer to be ready
       {
+#ifdef PEACHTERM_IS_VERBOSE
         std::cout << "Wating to read" << std::endl;
+#endif
         std::unique_lock<std::mutex> lk(read_data_state);
         read_data_state_cv.wait(lk, [this] { return buffer_ready_for_write; });
         buffer_ready_for_write = false;
-        
+#ifdef PEACHTERM_IS_VERBOSE  
         std::cout << "Doing read" << std::endl;
+#endif
         // it _was_ ready for write, but since we are about to send it, mark it
         // as not ready now...
       }
@@ -160,7 +165,9 @@ bool PseudoTerminal::fork_child() {
       BOOL fRead = ReadFile(child_process_output, szBuffer, BUFF_SIZE, &dwBytesRead, NULL);
 
       
+#ifdef PEACHTERM_IS_VERBOSE  
       std::cout << "Done read" << std::endl;
+#endif
 
       if (!fRead) {
         break;
