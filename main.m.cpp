@@ -33,7 +33,9 @@ int main(int argc, char *argv[]) {
   spec.bold = bold.value().font_data;
   spec.bolditalic = bolditalic.value().font_data;
   spec.italic = italic.value().font_data;
-  spec.pointsize = 24;
+  spec.pointsize = 16;
 
   app::run(spec);
+
+  return 0;
 }
