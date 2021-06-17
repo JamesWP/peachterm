@@ -465,7 +465,7 @@ void run(const gfx::FontSpec &spec) {
       case SDL_KEYDOWN: {
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
-          if(e.key.keysym.mod & SDLK_LSHIFT) {
+          if (e.key.keysym.mod & SDLK_LSHIFT) {
             std::cout << "Dump state\n";
             term.window.dump_state_callback();
           } else {
