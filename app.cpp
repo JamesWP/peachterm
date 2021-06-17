@@ -9,6 +9,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string.h>
 
@@ -144,42 +145,66 @@ void App::csi_m(const std::vector<int> &args) {
   // return;
   using A = gfx::TermCell::Attr;
 
-  auto extended_color = [&](auto &colour, auto &i) {
-    if (++i == args.end())
-      return;
+  auto parse_extended_colour = [&](auto &i) -> std::optional<uint32_t> {
+    ++i;
 
-    bool _256 = *i == 5;
-
-    if (++i == args.end())
-      return;
-
-    if (_256) {
-      colour = colors::table[*i];
-      return;
+    if (i == args.end()) {
+      // BAD: not enough args
+      return {};
     }
 
-    if (++i == args.end())
-      return;
+    // the first number indicates if we are in 256 color mode (one more number)
+    // or full color mode (three more numbers)
+    bool _256 = *i == 5;
 
-    colour = *i;
+    ++i;
+
+    if (i == args.end()) {
+      // BAD: not enough args
+      return {};
+    }
+
+    if (_256) {
+      return colors::table[*i];
+    }
+
+    // read out the R, G, B components (each treated as 8 bit numbers)
+    ++i;
+
+    if (i == args.end()) {
+      // BAD: not enough args
+      return {};
+    }
+
+    uint32_t colour = 0xFF & *i;
     colour <<= 8;
 
-    if (++i == args.end())
-      return;
+    ++i;
+
+    if (i == args.end()) {
+      // BAD: not enough args
+      return {};
+    }
 
     colour |= 0xFF & *i;
     colour <<= 8;
 
-    if (++i == args.end())
-      return;
+    ++i;
+
+    if (i == args.end()) {
+      // BAD: not enough args
+      return {};
+    }
 
     colour |= 0xFF & *i;
     colour <<= 8;
 
     colour |= 0xFF;
+
+    return colour;
   };
 
-  for (auto i = args.begin(); i != args.end(); i++) {
+  for (auto i = args.begin(); i != args.end(); ++i) {
     int arg = *i;
 
     if (arg >= 90 && arg <= 107) {
@@ -188,6 +213,8 @@ void App::csi_m(const std::vector<int> &args) {
 
     bool fg = arg >= 30 && arg < 40;
     uint32_t &colour = fg ? cell.fg_col : cell.bg_col;
+
+    std::optional<uint32_t> extended_colour;
 
     // clang-format off
           switch (arg) {
@@ -229,8 +256,13 @@ void App::csi_m(const std::vector<int> &args) {
           case 38: case 48:
             // Set  color
             // Next arguments are 5;n or 2;r;g;b
-            extended_color(colour, i);
+            extended_colour = parse_extended_colour(i);
+            if(extended_colour) {
+              colour = *extended_colour;
             break;
+            } else {
+              return;
+            }
           case 39: case 49:
             // Reset color.
             colour = fg ? reset.fg_col : reset.bg_col;
