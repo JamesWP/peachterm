@@ -41,6 +41,7 @@ void PseudoTerminal::write(std::string_view data) {
 }
 
 void PseudoTerminal::write(const char *data, size_t len) {
+#ifdef PEACHTERM_IS_VERBOSE
   std::cout << "Write pt length= " << len << ": ";
   size_t _len = len;
   for (const char *d = data; _len-- > 0; d++) {
@@ -51,6 +52,7 @@ void PseudoTerminal::write(const char *data, size_t len) {
     }
   }
   std::cout << '\n';
+#endif
 
   boost::asio::write(stream, boost::asio::buffer(data, len));
 }
