@@ -5,6 +5,8 @@
 #include <string_view>
 #include <tuple>
 
+#include "text_renderer.h"
+
 namespace app {
 template <typename T> void check_sdl_ptr_return(T *sdl_return) {
   if (sdl_return == nullptr) {
@@ -16,63 +18,6 @@ int round_down_multiple(int value, int multiple) {
   assert(value > 0);
   return value - value % multiple;
 }
-class TextRenderer {
-  SDL_Renderer *const _renderer = nullptr;
-  const int _cell_height = 0;
-  const int _row_width = 0;
-  SDL_Texture *const _texture = nullptr;
-
-public:
-  TextRenderer(SDL_Renderer *renderer, int cell_height, int row_width,
-               int cell_width)
-      : _renderer{renderer}, _cell_height{cell_height},
-        _row_width{round_down_multiple(row_width, cell_width)},
-        _texture{SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_ARGB8888,
-                                   SDL_TEXTUREACCESS_TARGET, _row_width,
-                                   _cell_height)} {
-    std::cout << "TextRender()" << std::endl;
-    check_sdl_ptr_return(_texture);
-  }
-
-  ~TextRenderer() {
-    std::cout << "~TextRender()" << std::endl;
-    SDL_DestroyTexture(_texture);
-  }
-
-  explicit TextRenderer(TextRenderer &&) = delete;
-  TextRenderer &operator=(TextRenderer &&) = delete;
-
-  std::pair<SDL_Texture *, SDL_Rect> render_text(std::string_view text) const {
-    assert(_renderer != nullptr);
-    assert(_texture != nullptr);
-
-    SDL_Rect row_rect;
-    row_rect.w = _row_width;
-    row_rect.h = _cell_height;
-    row_rect.x = 0;
-    row_rect.y = 0;
-    SDL_SetRenderTarget(_renderer, _texture);
-    SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(_renderer, &row_rect);
-
-    SDL_SetRenderDrawColor(_renderer, 100, 100, 100, 255);
-    SDL_RenderDrawRect(_renderer, &row_rect);
-
-    SDL_Rect text_rect;
-    text_rect.w = 24 + text.size() * 10;
-    text_rect.h = _cell_height - 10;
-    text_rect.y = 5;
-    text_rect.x = 10;
-
-    SDL_SetRenderDrawColor(_renderer, 100, 100, 100, 255);
-    SDL_RenderFillRect(_renderer, &text_rect);
-
-    return {_texture, row_rect};
-  }
-
-  int cell_height() const { return _cell_height; }
-  int row_width() const { return _row_width; }
-};
 class RowIterator {
   int _visible_start;
   int _visible_end;
@@ -154,8 +99,11 @@ class Peachterm {
   SDL_Window *_window;
   SDL_Renderer *_renderer;
 
+  // temporary hack
+  [[deprecated]] TTF_Font *_font;
+
   Terminal _terminal;
-  std::unique_ptr<TextRenderer> _text_renderer;
+  std::unique_ptr<gfx::TextRenderer> _text_renderer;
 
   int _vertical_scroll_offset = 0;   // pixels from top of terminal
   int _vertical_scroll_velocity = 0; // pixels per frame
@@ -177,8 +125,12 @@ public:
     _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
     check_sdl_ptr_return(_renderer);
 
-    _text_renderer = std::make_unique<TextRenderer>(
-        _renderer, initial_cell_height, initial_row_width, initial_cell_width);
+    _text_renderer = std::make_unique<gfx::TextRenderer>(_renderer);
+
+    const std::string font_path =
+        "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf";
+    _font = TTF_OpenFont(font_path.c_str(), 10);
+    check_sdl_ptr_return(_font);
   }
   void event(const SDL_Event &e) {
     switch (e.type) {
@@ -192,9 +144,6 @@ public:
       case SDL_WINDOWEVENT_RESIZED:
         std::cout << "Resized " << e.window.data1 << " x " << e.window.data2
                   << std::endl;
-        _text_renderer = std::make_unique<TextRenderer>(
-            _renderer, _text_renderer->cell_height(), e.window.data1,
-            initial_cell_width);
         break;
       default:
         break;
@@ -219,15 +168,39 @@ public:
       _vertical_scroll_offset += _vertical_scroll_velocity;
     }
 
-    for (auto [screen_row_rect, row_number] :
-         RowIterator(window_height, _terminal.get_num_rows(),
-                     _text_renderer->cell_height(), _text_renderer->row_width(),
-                     _vertical_scroll_offset)) {
-      auto [texture, texture_row_rect] =
-          _text_renderer->render_text(std::string(std::abs(row_number), 'A'));
+    SDL_SetRenderTarget(_renderer, nullptr);
 
-      SDL_SetRenderTarget(_renderer, nullptr);
-      SDL_RenderCopy(_renderer, texture, &texture_row_rect, &screen_row_rect);
+    for ([[maybe_unused]] auto [screen_row_rect, row_number] :
+         RowIterator(window_height, _terminal.get_num_rows(),
+                     _text_renderer->cell_height(), initial_row_width,
+                     _vertical_scroll_offset)) {
+      const std::string text = "This is row: " + std::to_string(row_number);
+      gfx::TextRenderer::CellSpec spec;
+      spec.background.a = 255;
+      spec.background.r = spec.background.g = spec.background.b = 255;
+
+      spec.foreground.a = 255;
+      spec.foreground.r = spec.foreground.g = spec.foreground.b = 0;
+
+      spec.font = _font;
+
+      SDL_Rect screen_char_rect;
+      screen_char_rect.x = screen_row_rect.x;
+      screen_char_rect.y = screen_row_rect.y;
+
+      for (auto c : text) {
+        std::string c_str;
+        c_str.append(&c, 1u);
+        spec.glyph = c_str;
+
+        auto [char_rect, char_texture] = _text_renderer->draw_character(spec);
+        screen_char_rect.w = char_rect.w;
+        screen_char_rect.h = char_rect.h;
+
+        SDL_RenderCopy(_renderer, char_texture, &char_rect, &screen_char_rect);
+
+        screen_char_rect.x += char_rect.w - 1;
+      }
     }
 
     SDL_RenderPresent(_renderer);
@@ -257,6 +230,8 @@ public:
 } // namespace app
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
+  TTF_Init();
+
   std::cout << "Hello world" << std::endl;
   {
     app::Peachterm app;
