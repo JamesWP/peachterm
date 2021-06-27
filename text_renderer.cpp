@@ -131,65 +131,81 @@ std::pair<int, int> TextRenderer::cell_size() const {
 void TextRenderer::draw_character(SDL_Renderer *ren, TTF_Font *font,
                                   std::string_view glyph, const SDL_Color &fg,
                                   const SDL_Color &bg, int top, int left) {
+  CellSpec sp;
+  sp.font = font;
+  sp.glyph = glyph;
+  sp.foreground = fg;
+  sp.background = bg;
+
+  auto [cache_rect, cache_tex] = draw_character(ren, sp);
+
   // Rectangle for the cell. in screen space.
   SDL_Rect cell_rect;
   cell_rect.x = left;
   cell_rect.y = top;
-  // width and height as yet unknown
+  cell_rect.w = cache_rect.w;
+  cell_rect.h = cache_rect.h;
 
-  auto [cache_index, is_hit] = get_cache_location(font, glyph, fg, bg);
+  SDL_RenderCopy(ren, cache_tex, &cache_rect, &cell_rect);
+}
+
+std::pair<SDL_Rect, SDL_Texture *>
+TextRenderer::draw_character(SDL_Renderer *ren, const CellSpec &spec) {
+
+  auto [cache_index, is_hit] = get_cache_location(spec);
 
   SDL_Rect cached_cell_rect;
   cached_cell_rect.x = (cache_index % cache_width_cells) * cell_width;
   cached_cell_rect.y = (cache_index / cache_height_cells) * cell_height;
-  cached_cell_rect.w = cell_rect.w = cell_width;
-  cached_cell_rect.h = cell_rect.h = cell_height;
+  cached_cell_rect.w = cell_width;
+  cached_cell_rect.h = cell_height;
 
   if (is_hit) {
-    SDL_RenderCopy(ren, cacheTex, &cached_cell_rect, &cell_rect);
-    return;
+    return std::make_pair(cached_cell_rect, cacheTex);
   }
 
   // Begin draw character.
-  SDL_Surface *cellSurf = TTF_RenderUTF8_Shaded(font, glyph.data(), fg, bg);
+  SDL_Surface *cellSurf = TTF_RenderUTF8_Shaded(spec.font, spec.glyph.data(), spec.foreground, spec.background);
   SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
 
+  SDL_Rect cell_rect;
+  cell_rect.x = cell_rect.y = 0;
   // Read back the size of the character
   SDL_QueryTexture(cellTex, nullptr, nullptr, &cell_rect.w, &cell_rect.h);
 
-  SDL_RenderCopy(ren, cellTex, NULL, &cell_rect);
-
   // Caching
-  if (cacheTex != nullptr) {
-    // Rememebr previous render target
-    SDL_Texture *prevTexTarget = SDL_GetRenderTarget(ren);
+  assert(cacheTex);
 
-    // Copy to cache
-    SDL_SetRenderTarget(ren, cacheTex);
+  // Rememebr previous render target
+  SDL_Texture *prevTexTarget = SDL_GetRenderTarget(ren);
 
-    // newly rendered glyph might be slightly different size.
-    // use the size from the actual rendered glyph.
-    // use the position from the cache destination
-    cached_cell_rect.w = cell_rect.w;
-    cached_cell_rect.h = cell_rect.h;
+  // Copy to cache
+  SDL_SetRenderTarget(ren, cacheTex);
 
-    cell_rect.x = 0;
-    cell_rect.y = 0;
+  // newly rendered glyph might be slightly different size.
+  // use the size from the actual rendered glyph.
+  // use the position from the cache destination
+  cached_cell_rect.w = cell_rect.w;
+  cached_cell_rect.h = cell_rect.h;
 
-    SDL_RenderCopy(ren, cellTex, &cell_rect, &cached_cell_rect);
-    SDL_RenderFlush(ren);
+  cell_rect.x = 0;
+  cell_rect.y = 0;
 
-    // Restore prvious render target
-    SDL_SetRenderTarget(ren, prevTexTarget);
-  }
+  SDL_RenderCopy(ren, cellTex, &cell_rect, &cached_cell_rect);
+  SDL_RenderFlush(ren);
+
+  // Restore prvious render target
+  SDL_SetRenderTarget(ren, prevTexTarget);
 
   SDL_FreeSurface(cellSurf);
   SDL_DestroyTexture(cellTex);
+
+  return std::make_pair(cached_cell_rect, cacheTex);
 }
 
-std::pair<int, bool> TextRenderer::get_cache_location(TTF_Font *font, std::string_view glyph,
-                                     SDL_Color fg, SDL_Color bg) {
-  auto map_key = std::make_tuple(font, fg, bg, std::string(glyph));
+std::pair<int, bool> TextRenderer::get_cache_location(const CellSpec &spec) {
+  auto map_key = std::make_tuple(spec.font, spec.foreground, spec.background,
+                                 std::string(spec.glyph));
   auto map_it = lru_map.find(map_key);
   if (map_it != lru_map.end()) {
 

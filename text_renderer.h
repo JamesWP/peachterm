@@ -28,6 +28,14 @@ using CacheMap =
     std::unordered_map<CellCacheKey, CacheList::iterator, cell_cache_key_hash>;
 
 class TextRenderer {
+public:
+  struct CellSpec {
+    TTF_Font *font;
+    std::string_view glyph;
+    SDL_Color foreground;
+    SDL_Color background;
+  };
+private:
   TTF_Font *fontRegular = nullptr;
   TTF_Font *fontRegularItalic = nullptr;
   TTF_Font *fontBold = nullptr;
@@ -56,6 +64,7 @@ public:
   void draw_character(SDL_Renderer *ren, TTF_Font *font, std::string_view glyph,
                       const SDL_Color &fg, const SDL_Color &bg, int top,
                       int left);
+  std::pair<SDL_Rect, SDL_Texture*> draw_character(SDL_Renderer *ren, const CellSpec &spec);
   void dump_cache_stats();
   void dump_cache_to_disk(SDL_Renderer *ren) const;
   ~TextRenderer();
@@ -63,8 +72,6 @@ public:
 private:
   // returns the (possibley new) cache location of the item.
   // {index_location, is_empty}
-  std::pair<int, bool> get_cache_location(TTF_Font *font,
-                                          std::string_view glyph, SDL_Color fg,
-                                          SDL_Color bg);
+  std::pair<int, bool> get_cache_location(const CellSpec& spec);
 };
 } // namespace gfx
