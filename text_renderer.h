@@ -35,7 +35,13 @@ public:
     SDL_Color foreground;
     SDL_Color background;
   };
+
 private:
+  SDL_Renderer *_renderer = nullptr;
+
+  int _cell_width = 6;
+  int _cell_height = 12;
+
   TTF_Font *fontRegular = nullptr;
   TTF_Font *fontRegularItalic = nullptr;
   TTF_Font *fontBold = nullptr;
@@ -53,25 +59,44 @@ private:
   CacheMap lru_map;
 
 public:
-  int cell_width = 6;
-  int cell_height = 12;
   int font_height = 12;
   int font_point = 14;
 
-  void load_fonts(SDL_Renderer *ren, const FontSpec &);
-  TTF_Font *get_font(bool bold = false, bool italic = false) const;
-  std::pair<int, int> cell_size() const;
-  void draw_character(SDL_Renderer *ren, TTF_Font *font, std::string_view glyph,
-                      const SDL_Color &fg, const SDL_Color &bg, int top,
-                      int left);
-  std::pair<SDL_Rect, SDL_Texture*> draw_character(SDL_Renderer *ren, const CellSpec &spec);
+  [[deprecated]] void load_fonts(SDL_Renderer *ren, const FontSpec &);
+
+  [[deprecated]] TTF_Font *get_font(bool bold = false,
+                                    bool italic = false) const;
+
+  std::pair<int, int> cell_size() const {
+    return std::make_pair(cell_width(), cell_height());
+  }
+  int cell_height() const { return _cell_height; }
+  int cell_width() const { return _cell_width; }
+
+  [[deprecated]] void draw_character(SDL_Renderer *ren, TTF_Font *font,
+                                     std::string_view glyph,
+                                     const SDL_Color &fg, const SDL_Color &bg,
+                                     int top, int left);
+
+  [[deprecated]] std::pair<SDL_Rect, SDL_Texture *>
+  draw_character(SDL_Renderer *ren, const CellSpec &spec);
+
+  std::pair<SDL_Rect, SDL_Texture *> draw_character(const CellSpec &spec);
+
   void dump_cache_stats();
   void dump_cache_to_disk(SDL_Renderer *ren) const;
+
+  [[deprecated]] TextRenderer() = default;
+
+  TextRenderer(SDL_Renderer *ren);
+
   ~TextRenderer();
 
 private:
   // returns the (possibley new) cache location of the item.
   // {index_location, is_empty}
-  std::pair<int, bool> get_cache_location(const CellSpec& spec);
+  std::pair<int, bool> get_cache_location(const CellSpec &spec);
+
+  void populate_cache();
 };
 } // namespace gfx

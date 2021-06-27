@@ -23,6 +23,10 @@ SDL_RWops *RW_FromString(const std::string &data) {
 
 namespace gfx {
 
+TextRenderer::TextRenderer(SDL_Renderer* renderer):_renderer{renderer} {
+  populate_cache();
+}
+
 void TextRenderer::load_fonts(SDL_Renderer *ren, const FontSpec &spec) {
   if (fontRegular != 0) {
     TTF_CloseFont(fontRegular);
@@ -56,8 +60,8 @@ void TextRenderer::load_fonts(SDL_Renderer *ren, const FontSpec &spec) {
 
   font_height = TTF_FontHeight(fontRegular);
 
-  cell_height = font_height;
-  cell_width = advance;
+  _cell_height = font_height;
+  _cell_width = advance;
   font_point = spec.pointsize;
 
   std::cout << "Loaded fonts\n";
@@ -66,12 +70,20 @@ void TextRenderer::load_fonts(SDL_Renderer *ren, const FontSpec &spec) {
     SDL_DestroyTexture(cacheTex);
   }
 
-  cacheTex = SDL_CreateTexture(
-      ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-      cache_width_cells * cell_width, cache_height_cells * cell_height);
-
   lru_map.clear();
   lru_list.clear();
+
+  std::cout << "Cleared cell cache\n";
+
+  _renderer = ren;
+
+  populate_cache();
+}
+
+void TextRenderer::populate_cache() {
+  cacheTex = SDL_CreateTexture(
+      _renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+      cache_width_cells * cell_width(), cache_height_cells * cell_height());
 
   SDL_Color black;
   black.r = black.g = black.b = 0;
@@ -81,8 +93,6 @@ void TextRenderer::load_fonts(SDL_Renderer *ren, const FontSpec &spec) {
         std::make_tuple((TTF_Font *)nullptr, black, black, std::string{" "});
     lru_list.push_front(std::make_pair(key, i));
   }
-
-  std::cout << "Cleared cell cache\n";
 }
 
 TextRenderer::~TextRenderer() {
@@ -124,10 +134,6 @@ TTF_Font *TextRenderer::get_font(bool bold, bool italic) const {
   return font;
 }
 
-std::pair<int, int> TextRenderer::cell_size() const {
-  return {cell_width, cell_height};
-}
-
 void TextRenderer::draw_character(SDL_Renderer *ren, TTF_Font *font,
                                   std::string_view glyph, const SDL_Color &fg,
                                   const SDL_Color &bg, int top, int left) {
@@ -151,14 +157,20 @@ void TextRenderer::draw_character(SDL_Renderer *ren, TTF_Font *font,
 
 std::pair<SDL_Rect, SDL_Texture *>
 TextRenderer::draw_character(SDL_Renderer *ren, const CellSpec &spec) {
+  _renderer = ren;
+  return draw_character(spec);
+}
+
+std::pair<SDL_Rect, SDL_Texture *>
+TextRenderer::draw_character(const CellSpec &spec) {
 
   auto [cache_index, is_hit] = get_cache_location(spec);
 
   SDL_Rect cached_cell_rect;
-  cached_cell_rect.x = (cache_index % cache_width_cells) * cell_width;
-  cached_cell_rect.y = (cache_index / cache_height_cells) * cell_height;
-  cached_cell_rect.w = cell_width;
-  cached_cell_rect.h = cell_height;
+  cached_cell_rect.x = (cache_index % cache_width_cells) * cell_width();
+  cached_cell_rect.y = (cache_index / cache_height_cells) * cell_height();
+  cached_cell_rect.w = cell_width();
+  cached_cell_rect.h = cell_height();
 
   if (is_hit) {
     return std::make_pair(cached_cell_rect, cacheTex);
@@ -166,7 +178,7 @@ TextRenderer::draw_character(SDL_Renderer *ren, const CellSpec &spec) {
 
   // Begin draw character.
   SDL_Surface *cellSurf = TTF_RenderUTF8_Shaded(spec.font, spec.glyph.data(), spec.foreground, spec.background);
-  SDL_Texture *cellTex = SDL_CreateTextureFromSurface(ren, cellSurf);
+  SDL_Texture *cellTex = SDL_CreateTextureFromSurface(_renderer, cellSurf);
 
   SDL_Rect cell_rect;
   cell_rect.x = cell_rect.y = 0;
@@ -177,10 +189,10 @@ TextRenderer::draw_character(SDL_Renderer *ren, const CellSpec &spec) {
   assert(cacheTex);
 
   // Rememebr previous render target
-  SDL_Texture *prevTexTarget = SDL_GetRenderTarget(ren);
+  SDL_Texture *prevTexTarget = SDL_GetRenderTarget(_renderer);
 
   // Copy to cache
-  SDL_SetRenderTarget(ren, cacheTex);
+  SDL_SetRenderTarget(_renderer, cacheTex);
 
   // newly rendered glyph might be slightly different size.
   // use the size from the actual rendered glyph.
@@ -191,11 +203,11 @@ TextRenderer::draw_character(SDL_Renderer *ren, const CellSpec &spec) {
   cell_rect.x = 0;
   cell_rect.y = 0;
 
-  SDL_RenderCopy(ren, cellTex, &cell_rect, &cached_cell_rect);
-  SDL_RenderFlush(ren);
+  SDL_RenderCopy(_renderer, cellTex, &cell_rect, &cached_cell_rect);
+  SDL_RenderFlush(_renderer);
 
   // Restore prvious render target
-  SDL_SetRenderTarget(ren, prevTexTarget);
+  SDL_SetRenderTarget(_renderer, prevTexTarget);
 
   SDL_FreeSurface(cellSurf);
   SDL_DestroyTexture(cellTex);

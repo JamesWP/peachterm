@@ -26,8 +26,8 @@ context::~context() {
 }
 
 TermWin::TermWin(int rows = 24, int cols = 80) {
-  const int window_width = cols * tRender.cell_width;
-  const int window_height = rows * tRender.cell_height;
+  const int window_width = cols * tRender.cell_width();
+  const int window_height = rows * tRender.cell_height();
 
   win = SDL_CreateWindow("Hello World", SDL_WINDOWPOS_UNDEFINED,
                          SDL_WINDOWPOS_UNDEFINED, window_width, window_height,
@@ -67,8 +67,8 @@ void TermWin::resize_term(int rows, int cols) {
   num_rows = rows;
   num_cols = cols;
 
-  const int tex_width = num_cols * tRender.cell_width;
-  const int tex_height = num_rows * tRender.cell_height;
+  const int tex_width = num_cols * tRender.cell_width();
+  const int tex_height = num_rows * tRender.cell_height();
 
   normalScreen.resize(num_rows * num_cols);
   alternativeScreen.resize(num_rows * num_cols);
@@ -174,8 +174,8 @@ void TermWin::redraw() {
       int offset = row * num_cols + col;
       const TermCell &cell = cels[offset].value();
       bool dirty = cels[offset].dirty();
-      int cell_top_y = row * tRender.cell_height;
-      int cell_left_x = col * tRender.cell_width;
+      int cell_top_y = row * tRender.cell_height();
+      int cell_left_x = col * tRender.cell_width();
 
       // Cell content.
       const char *glyph = cell.glyph.c_str();
@@ -197,10 +197,10 @@ void TermWin::redraw() {
 
       // Rectangle for the cursor.
       SDL_Rect curs_rect;
-      curs_rect.w = tRender.cell_width;
+      curs_rect.w = tRender.cell_width();
       curs_rect.h = curs_height;
       curs_rect.x = cell_left_x;
-      curs_rect.y = cell_top_y + tRender.cell_height - curs_height;
+      curs_rect.y = cell_top_y + tRender.cell_height() - curs_height;
 
       // Cell font;
       TTF_Font *font = tRender.get_font(cell.bold, cell.italic);
