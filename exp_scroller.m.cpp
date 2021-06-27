@@ -1,5 +1,7 @@
 #include <SDL.h>
+#include <cassert>
 #include <iostream>
+#include <memory>
 #include <string_view>
 #include <tuple>
 
@@ -10,27 +12,43 @@ template <typename T> void check_sdl_ptr_return(T *sdl_return) {
     throw std::runtime_error(sdl_error);
   }
 }
+int round_down_multiple(int value, int multiple) {
+  assert(value > 0);
+  return value - value % multiple;
+}
 class TextRenderer {
-  SDL_Renderer *_renderer;
-  int _row_height;
-  int _row_width;
-  SDL_Texture *_texture;
+  SDL_Renderer *const _renderer = nullptr;
+  const int _cell_height = 0;
+  const int _row_width = 0;
+  SDL_Texture *const _texture = nullptr;
 
 public:
-  void init(SDL_Renderer *renderer, int row_height, int row_width) {
-    _renderer = renderer;
-    _row_height = row_height;
-    _row_width = row_width;
-    _texture =
-        SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_ARGB8888,
-                          SDL_TEXTUREACCESS_TARGET, _row_width, _row_height);
+  TextRenderer(SDL_Renderer *renderer, int cell_height, int row_width,
+               int cell_width)
+      : _renderer{renderer}, _cell_height{cell_height},
+        _row_width{round_down_multiple(row_width, cell_width)},
+        _texture{SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_ARGB8888,
+                                   SDL_TEXTUREACCESS_TARGET, _row_width,
+                                   _cell_height)} {
+    std::cout << "TextRender()" << std::endl;
     check_sdl_ptr_return(_texture);
   }
 
-  std::pair<SDL_Texture *, SDL_Rect> render_text(std::string_view text) {
+  ~TextRenderer() {
+    std::cout << "~TextRender()" << std::endl;
+    SDL_DestroyTexture(_texture);
+  }
+
+  explicit TextRenderer(TextRenderer &&) = delete;
+  TextRenderer &operator=(TextRenderer &&) = delete;
+
+  std::pair<SDL_Texture *, SDL_Rect> render_text(std::string_view text) const {
+    assert(_renderer != nullptr);
+    assert(_texture != nullptr);
+
     SDL_Rect row_rect;
     row_rect.w = _row_width;
-    row_rect.h = _row_height;
+    row_rect.h = _cell_height;
     row_rect.x = 0;
     row_rect.y = 0;
     SDL_SetRenderTarget(_renderer, _texture);
@@ -42,7 +60,7 @@ public:
 
     SDL_Rect text_rect;
     text_rect.w = 24 + text.size() * 10;
-    text_rect.h = _row_height - 10;
+    text_rect.h = _cell_height - 10;
     text_rect.y = 5;
     text_rect.x = 10;
 
@@ -51,6 +69,9 @@ public:
 
     return {_texture, row_rect};
   }
+
+  int cell_height() const { return _cell_height; }
+  int row_width() const { return _row_width; }
 };
 class RowIterator {
   int _visible_start;
@@ -75,7 +96,7 @@ public:
     _visible_start = std::max(content_start, window_start);
     _visible_end = std::min(content_end, window_end);
 
-    _curent_row = (_visible_start-vertical_scroll_offset) / row_height;
+    _curent_row = (_visible_start - vertical_scroll_offset) / row_height;
 
     _row_height = row_height;
     _row_width = row_width;
@@ -134,37 +155,54 @@ class Peachterm {
   SDL_Renderer *_renderer;
 
   Terminal _terminal;
-  TextRenderer _text_renderer;
+  std::unique_ptr<TextRenderer> _text_renderer;
 
-  int _vertical_scroll_offset;   // pixels from top of terminal
-  int _vertical_scroll_velocity; // pixels per frame
+  int _vertical_scroll_offset = 0;   // pixels from top of terminal
+  int _vertical_scroll_velocity = 0; // pixels per frame
 
-  int _row_height; // pixel height of row
-  int _row_width;
+  static constexpr int initial_window_height = 480;
+  static constexpr int initial_window_width = 640;
+
+  static constexpr int initial_cell_width = 10;
+  static constexpr int initial_cell_height = 16;
+  static constexpr int initial_row_width = initial_window_width;
 
 public:
   Peachterm() {
-    _row_width = 640;
-    _row_height = 16;
     _window = SDL_CreateWindow("Peachterm", SDL_WINDOWPOS_UNDEFINED,
-                               SDL_WINDOWPOS_UNDEFINED, _row_width, 480,
-                               SDL_WINDOW_OPENGL);
+                               SDL_WINDOWPOS_UNDEFINED, initial_window_width,
+                               initial_window_height,
+                               SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     check_sdl_ptr_return(_window);
     _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
     check_sdl_ptr_return(_renderer);
 
-    _text_renderer.init(_renderer, _row_height, _row_width);
-
-    _vertical_scroll_velocity = 0;
-    _vertical_scroll_offset = 0;
+    _text_renderer = std::make_unique<TextRenderer>(
+        _renderer, initial_cell_height, initial_row_width, initial_cell_width);
   }
   void event(const SDL_Event &e) {
     switch (e.type) {
     case SDL_MOUSEWHEEL:
       _vertical_scroll_offset += 2 * e.wheel.y;
-      _vertical_scroll_velocity += 2*e.wheel.y;
+      _vertical_scroll_velocity += 2 * e.wheel.y;
       _vertical_scroll_velocity = std::min(_vertical_scroll_velocity, 100);
       break;
+    case SDL_WINDOWEVENT:
+      switch (e.window.event) {
+      case SDL_WINDOWEVENT_RESIZED:
+        std::cout << "Resized " << e.window.data1 << " x " << e.window.data2
+                  << std::endl;
+        _text_renderer = std::make_unique<TextRenderer>(
+            _renderer, _text_renderer->cell_height(), e.window.data1,
+            initial_cell_width);
+        break;
+      default:
+        break;
+      }
+      break;
+    default:
+      std::cerr << "Peachterm: unknown event type: " << e.type << std::endl;
+      assert(false);
     }
   }
   void render() {
@@ -177,15 +215,16 @@ public:
 
     // update scroll offset
     _vertical_scroll_velocity *= 0.85;
-    if(std::abs(_vertical_scroll_velocity) > 4) {
+    if (std::abs(_vertical_scroll_velocity) > 4) {
       _vertical_scroll_offset += _vertical_scroll_velocity;
     }
 
     for (auto [screen_row_rect, row_number] :
-         RowIterator(window_height, _terminal.get_num_rows(), _row_height,
-                     _row_width, _vertical_scroll_offset)) {
+         RowIterator(window_height, _terminal.get_num_rows(),
+                     _text_renderer->cell_height(), _text_renderer->row_width(),
+                     _vertical_scroll_offset)) {
       auto [texture, texture_row_rect] =
-          _text_renderer.render_text(std::string(std::abs(row_number), 'A'));
+          _text_renderer->render_text(std::string(std::abs(row_number), 'A'));
 
       SDL_SetRenderTarget(_renderer, nullptr);
       SDL_RenderCopy(_renderer, texture, &texture_row_rect, &screen_row_rect);
@@ -198,7 +237,6 @@ public:
     SDL_DestroyWindow(_window);
   }
 };
-
 class FrameTimer {
   // 1 tick is 1ms, time each frame must take minimum
   static constexpr int FRAME_TICKS_MIN = 1000 / 60;
@@ -220,35 +258,52 @@ public:
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
   std::cout << "Hello world" << std::endl;
-  app::Peachterm app;
+  {
+    app::Peachterm app;
 
-  SDL_Event e;
+    SDL_Event e;
 
-  while (true) {
-    app::FrameTimer _frameLimiter;
+    bool running = true;
 
-    while (SDL_PollEvent(&e) != 0) {
-      switch (e.type) {
-      case SDL_QUIT:
-        return 0;
-      case SDL_KEYDOWN: {
-        switch (e.key.keysym.sym) {
-        case SDLK_ESCAPE:
-          return 0;
+    while (running) {
+      app::FrameTimer _frameLimiter;
+
+      while (SDL_PollEvent(&e) != 0) {
+        switch (e.type) {
+        case SDL_QUIT:
+          running = false;
+          break;
+        case SDL_KEYDOWN: {
+          switch (e.key.keysym.sym) {
+          case SDLK_ESCAPE:
+            running = false;
+          }
+        } break;
+        case SDL_MOUSEWHEEL: {
+          if (e.wheel.y != 0) {
+            app.event(e);
+          }
+        } break;
+        case SDL_WINDOWEVENT: {
+          switch (e.window.event) {
+          case SDL_WINDOWEVENT_CLOSE:
+            e.type = SDL_QUIT;
+            SDL_PushEvent(&e);
+            break;
+          case SDL_WINDOWEVENT_RESIZED:
+            app.event(e);
+            break;
+          }
+          break;
         }
-      } break;
-      case SDL_MOUSEWHEEL: {
-        if (e.wheel.y != 0) {
-          app.event(e);
-        }
-      } break;
-      } // event type switch
-    }   // while poll event
+        } // event type switch
+      }   // while poll event
 
-    app.render();
+      app.render();
 
-  } // while true
+    } // while true
 
-  app.close();
+    app.close();
+  }
   std::cout << "Goodbye world" << std::endl;
 }
