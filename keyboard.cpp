@@ -78,14 +78,16 @@ std::string_view convert_to_input(SDL_KeyboardEvent *e, Mode mode) {
 
   int sym = e->keysym.sym;
 
+#if 0
   switch (sym) {
   case SDLK_RETURN:
-    return "\n";
+    return "\r";
   case SDLK_BACKSPACE:
     return "\b";
   case SDLK_LEFTBRACKET:
     if(ctrl) return "\33";
   }
+#endif
 
   if (auto i = lore.find(sym); i != lore.end()) {
     const auto &d = i->second;
